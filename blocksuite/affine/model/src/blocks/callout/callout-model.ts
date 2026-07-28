@@ -24,6 +24,7 @@ export const CalloutBlockSchema = defineBlockSchema({
     'meta:updatedAt': undefined,
     'meta:createdBy': undefined,
     'meta:updatedBy': undefined,
+    'meta:displayInTimelineAt': undefined,
   }),
   metadata: {
     version: 1,

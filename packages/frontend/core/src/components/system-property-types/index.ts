@@ -18,6 +18,11 @@ import {
 import type { GroupHeaderProps } from '../explorer/types';
 import { DateFilterMethod } from '../workspace-property-types';
 import {
+  IncludeInTimelineDocListProperty,
+  IncludeInTimelineFilterValue,
+  IncludeInTimelineGroupHeader,
+} from '../workspace-property-types/include-in-timeline';
+import {
   CreateAtDocListProperty,
   CreatedAtFilterValue,
   CreatedAtGroupHeader,
@@ -195,6 +200,21 @@ export const SystemPropertyTypes = {
       'is-not': 'com.affine.editCollection.rules.include.is-not',
     },
     filterValue: TemplateFilterValue,
+    defaultFilter: { method: 'is', value: 'true' },
+  },
+  includeInTimeline: {
+    icon: HistoryIcon,
+    name: 'com.affine.page-properties.property.includeInTimeline',
+    showInDocList: 'stack',
+    allowInGroupBy: true,
+    allowInOrderBy: true,
+    docListProperty: IncludeInTimelineDocListProperty,
+    groupHeader: IncludeInTimelineGroupHeader,
+    filterMethod: {
+      is: 'com.affine.editCollection.rules.include.is',
+      'is-not': 'com.affine.editCollection.rules.include.is-not',
+    },
+    filterValue: IncludeInTimelineFilterValue,
     defaultFilter: { method: 'is', value: 'true' },
   },
   integrationType: {

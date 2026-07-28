@@ -61,6 +61,53 @@ export class FolderStore extends Store {
       data: nodeId,
       index: index,
     });
+
+    if (type === 'doc' && parent.includeInTimelineDefault) {
+      this.setDocIncludeInTimeline(nodeId, true);
+    }
+  }
+
+  setIncludeInTimelineDefault(folderId: string, value: boolean) {
+    const node = this.dbService.db.folders.get(folderId);
+    if (node === null || node.type !== 'folder') {
+      throw new Error('Folder not found');
+    }
+    this.dbService.db.folders.update(folderId, {
+      includeInTimelineDefault: value,
+    });
+  }
+
+  /**
+   * One-off: recursively apply `includeInTimeline` to all current doc
+   * descendants of the folder.
+   */
+  applyIncludeInTimelineToDescendants(folderId: string, value: boolean) {
+    const info = this.dbService.db.folders.get(folderId);
+    if (info === null || info.type !== 'folder') {
+      throw new Error('Folder not found');
+    }
+    const stack = [info];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) {
+        continue;
+      }
+      if (current.type === 'doc') {
+        this.setDocIncludeInTimeline(current.data, value);
+      } else if (current.type === 'folder') {
+        const children = this.dbService.db.folders.find({
+          parentId: current.id,
+        });
+        stack.push(...children);
+      }
+    }
+  }
+
+  private setDocIncludeInTimeline(docId: string, value: boolean) {
+    this.dbService.db.docProperties.create({
+      id: docId,
+      includeInTimeline: value,
+    });
   }
 
   renameNode(nodeId: string, name: string) {
@@ -149,5 +196,12 @@ export class FolderStore extends Store {
       parentId,
       index,
     });
+
+    if (node.type === 'doc' && parentId) {
+      const parent = this.dbService.db.folders.get(parentId);
+      if (parent?.includeInTimelineDefault) {
+        this.setDocIncludeInTimeline(node.data, true);
+      }
+    }
   }
 }

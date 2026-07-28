@@ -65,6 +65,12 @@ import {
   EdgelessThemeValue,
 } from './edgeless-theme';
 import {
+  IncludeInTimelineDocListProperty,
+  IncludeInTimelineFilterValue,
+  IncludeInTimelineGroupHeader,
+  IncludeInTimelineValue,
+} from './include-in-timeline';
+import {
   JournalDocListProperty,
   JournalFilterValue,
   JournalGroupHeader,
@@ -366,6 +372,25 @@ export const WorkspacePropertyTypes = {
       'is-not': 'com.affine.editCollection.rules.include.is-not',
     },
     filterValue: TemplateFilterValue,
+    defaultFilter: { method: 'is', value: 'true' },
+  },
+  includeInTimeline: {
+    icon: HistoryIcon,
+    value: IncludeInTimelineValue,
+    name: 'com.affine.page-properties.property.includeInTimeline',
+    renameable: true,
+    description:
+      'com.affine.page-properties.property.includeInTimeline.tooltips',
+    showInDocList: 'stack',
+    allowInGroupBy: true,
+    allowInOrderBy: true,
+    docListProperty: IncludeInTimelineDocListProperty,
+    groupHeader: IncludeInTimelineGroupHeader,
+    filterMethod: {
+      is: 'com.affine.editCollection.rules.include.is',
+      'is-not': 'com.affine.editCollection.rules.include.is-not',
+    },
+    filterValue: IncludeInTimelineFilterValue,
     defaultFilter: { method: 'is', value: 'true' },
   },
   unknown: {

@@ -38,6 +38,7 @@ export const ListBlockSchema = defineBlockSchema({
       'meta:createdBy': undefined,
       'meta:updatedAt': undefined,
       'meta:updatedBy': undefined,
+      'meta:displayInTimelineAt': undefined,
     }) as ListProps,
   metadata: {
     version: 1,

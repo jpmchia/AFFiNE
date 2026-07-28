@@ -41,6 +41,7 @@ const defaultImageProps: ImageBlockProps = {
   'meta:createdBy': undefined,
   'meta:updatedAt': undefined,
   'meta:updatedBy': undefined,
+  'meta:displayInTimelineAt': undefined,
 };
 
 export const ImageBlockSchema = defineBlockSchema({

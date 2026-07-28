@@ -19,6 +19,7 @@ export const AFFiNE_WORKSPACE_DB_SCHEMA = {
     data: f.string(),
     type: f.string(),
     index: f.string(),
+    includeInTimelineDefault: f.boolean().optional(),
   },
   docProperties: t.document({
     // { [`custom:{customPropertyId}`]: any }
@@ -28,6 +29,7 @@ export const AFFiNE_WORKSPACE_DB_SCHEMA = {
     journal: f.string().optional(),
     pageWidth: f.string().optional(),
     isTemplate: f.boolean().optional(),
+    includeInTimeline: f.boolean().optional(),
     integrationType: integrationType.optional(),
     createdBy: f.string().optional(),
     updatedBy: f.string().optional(),

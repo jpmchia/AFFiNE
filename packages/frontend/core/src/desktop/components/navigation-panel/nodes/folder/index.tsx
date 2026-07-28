@@ -26,6 +26,7 @@ import { track } from '@affine/track';
 import {
   DeleteIcon,
   FolderIcon,
+  HistoryIcon,
   PageIcon,
   PlusIcon,
   PlusThickIcon,
@@ -595,6 +596,16 @@ const NavigationPanelFolderNodeFolder = ({
     setCollapsed(false);
   }, [createPage, node, setCollapsed]);
 
+  const includeInTimelineDefault = useLiveData(node.includeInTimelineDefault$);
+  const enableTimeline = useLiveData(
+    featureFlagService.flags.enable_timeline.$
+  );
+  const handleToggleTimeline = useCallback(() => {
+    const next = !includeInTimelineDefault;
+    node.setIncludeInTimelineDefault(next);
+    node.applyIncludeInTimelineToDescendants(next);
+  }, [includeInTimelineDefault, node]);
+
   const handleCreateSubfolder = useCallback(() => {
     const newFolderId = node.createFolder(
       t['com.affine.rootAppSidebar.organize.new-folders'](),
@@ -722,6 +733,21 @@ const NavigationPanelFolderNodeFolder = ({
       },
 
       {
+        index: 201,
+        view: enableTimeline ? (
+          <MenuItem prefixIcon={<HistoryIcon />} onClick={handleToggleTimeline}>
+            {includeInTimelineDefault
+              ? t[
+                  'com.affine.rootAppSidebar.organize.folder.remove-from-timeline'
+                ]()
+              : t[
+                  'com.affine.rootAppSidebar.organize.folder.add-to-timeline'
+                ]()}
+          </MenuItem>
+        ) : null,
+      },
+
+      {
         index: 9999,
         view: <MenuSeparator key="menu-separator" />,
       },
@@ -739,10 +765,13 @@ const NavigationPanelFolderNodeFolder = ({
       },
     ];
   }, [
+    enableTimeline,
     handleAddToFolder,
     handleCreateSubfolder,
     handleDelete,
     handleNewDoc,
+    handleToggleTimeline,
+    includeInTimelineDefault,
     node,
     t,
   ]);

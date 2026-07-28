@@ -15,6 +15,7 @@ import { DocPrimaryModeFilterProvider } from './impls/filters/doc-primary-mode';
 import { EdgelessThemeFilterProvider } from './impls/filters/edgeless-theme';
 import { EmptyJournalFilterProvider } from './impls/filters/empty-journal';
 import { FavoriteFilterProvider } from './impls/filters/favorite';
+import { IncludeInTimelineFilterProvider } from './impls/filters/include-in-timeline';
 import { IntegrationTypeFilterProvider } from './impls/filters/integration-type';
 import { JournalFilterProvider } from './impls/filters/journal';
 import { NumberPropertyFilterProvider } from './impls/filters/number';
@@ -35,6 +36,7 @@ import { CreatedByGroupByProvider } from './impls/group-by/created-by';
 import { DatePropertyGroupByProvider } from './impls/group-by/date';
 import { DocPrimaryModeGroupByProvider } from './impls/group-by/doc-primary-mode';
 import { EdgelessThemeGroupByProvider } from './impls/group-by/edgeless-theme';
+import { IncludeInTimelineGroupByProvider } from './impls/group-by/include-in-timeline';
 import { IntegrationTypeGroupByProvider } from './impls/group-by/integration-type';
 import { JournalGroupByProvider } from './impls/group-by/journal';
 import { NumberPropertyGroupByProvider } from './impls/group-by/number';
@@ -52,6 +54,7 @@ import { CreatedByOrderByProvider } from './impls/order-by/created-by';
 import { DatePropertyOrderByProvider } from './impls/order-by/date';
 import { DocPrimaryModeOrderByProvider } from './impls/order-by/doc-primary-mode';
 import { EdgelessThemeOrderByProvider } from './impls/order-by/edgeless-theme';
+import { IncludeInTimelineOrderByProvider } from './impls/order-by/include-in-timeline';
 import { IntegrationTypeOrderByProvider } from './impls/order-by/integration-type';
 import { JournalOrderByProvider } from './impls/order-by/journal';
 import { NumberPropertyOrderByProvider } from './impls/order-by/number';
@@ -173,6 +176,16 @@ export function configureCollectionRulesModule(framework: Framework) {
     .impl(FilterProvider('system:template'), TemplateFilterProvider, [
       DocsService,
     ])
+    .impl(
+      FilterProvider('property:includeInTimeline'),
+      IncludeInTimelineFilterProvider,
+      [DocsService]
+    )
+    .impl(
+      FilterProvider('system:includeInTimeline'),
+      IncludeInTimelineFilterProvider,
+      [DocsService]
+    )
     .impl(FilterProvider('property:pageWidth'), PageWidthFilterProvider, [
       DocsService,
     ])
@@ -273,6 +286,16 @@ export function configureCollectionRulesModule(framework: Framework) {
     .impl(GroupByProvider('system:template'), TemplateGroupByProvider, [
       DocsService,
     ])
+    .impl(
+      GroupByProvider('property:includeInTimeline'),
+      IncludeInTimelineGroupByProvider,
+      [DocsService]
+    )
+    .impl(
+      GroupByProvider('system:includeInTimeline'),
+      IncludeInTimelineGroupByProvider,
+      [DocsService]
+    )
     // --------------- Order By ---------------
     .impl(OrderByProvider('system'), SystemOrderByProvider)
     .impl(OrderByProvider('property'), PropertyOrderByProvider, [
@@ -367,5 +390,15 @@ export function configureCollectionRulesModule(framework: Framework) {
     .impl(OrderByProvider('system:template'), TemplateOrderByProvider, [
       DocsService,
     ])
+    .impl(
+      OrderByProvider('property:includeInTimeline'),
+      IncludeInTimelineOrderByProvider,
+      [DocsService]
+    )
+    .impl(
+      OrderByProvider('system:includeInTimeline'),
+      IncludeInTimelineOrderByProvider,
+      [DocsService]
+    )
     .impl(OrderByProvider('system:title'), TitleOrderByProvider, [DocsService]);
 }

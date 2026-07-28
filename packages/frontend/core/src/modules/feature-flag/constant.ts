@@ -96,6 +96,16 @@ export const AFFINE_FLAGS = {
     configurable: isCanaryBuild,
     defaultState: true,
   },
+  enable_timeline: {
+    category: 'blocksuite',
+    bsFlag: 'enable_timeline',
+    displayName:
+      'com.affine.settings.workspace.experimental-features.enable-timeline.name',
+    description:
+      'com.affine.settings.workspace.experimental-features.enable-timeline.description',
+    configurable: true,
+    defaultState: false,
+  },
 
   enable_emoji_folder_icon: {
     category: 'affine',

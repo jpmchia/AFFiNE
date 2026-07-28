@@ -3241,6 +3241,10 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.page-properties.property.template"](): string;
     /**
+      * `Timeline`
+      */
+    ["com.affine.page-properties.property.includeInTimeline"](): string;
+    /**
       * `Add relevant identifiers or categories to the doc. Useful for organizing content, improving searchability, and grouping related docs together.`
       */
     ["com.affine.page-properties.property.tags.tooltips"](): string;
@@ -3316,6 +3320,10 @@ export function useAFFiNEI18N(): {
       * `Mark this doc as a template, which can be used to create new docs.`
       */
     ["com.affine.page-properties.property.template.tooltips"](): string;
+    /**
+      * `Include this doc's content in the Timeline view.`
+      */
+    ["com.affine.page-properties.property.includeInTimeline.tooltips"](): string;
     /**
       * `Created by {{userName}}`
       */
@@ -4924,6 +4932,14 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.rootAppSidebar.organize.folder.add-tags"](): string;
     /**
+      * `Include folder in Timeline`
+      */
+    ["com.affine.rootAppSidebar.organize.folder.add-to-timeline"](): string;
+    /**
+      * `Remove folder from Timeline`
+      */
+    ["com.affine.rootAppSidebar.organize.folder.remove-from-timeline"](): string;
+    /**
       * `Create a subfolder`
       */
     ["com.affine.rootAppSidebar.organize.folder.create-subfolder"](): string;
@@ -6369,6 +6385,14 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.settings.workspace.experimental-features.enable-block-meta.description"](): string;
     /**
+      * `Timeline`
+      */
+    ["com.affine.settings.workspace.experimental-features.enable-timeline.name"](): string;
+    /**
+      * `Enables a chronological Timeline view aggregating content from docs opted into it.`
+      */
+    ["com.affine.settings.workspace.experimental-features.enable-timeline.description"](): string;
+    /**
       * `Callout`
       */
     ["com.affine.settings.workspace.experimental-features.enable-callout.name"](): string;
@@ -7743,6 +7767,42 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.workspaceSubPath.chat"](): string;
     /**
+      * `Timeline`
+      */
+    ["com.affine.timeline.name"](): string;
+    /**
+      * `No docs are included in the Timeline yet.`
+      */
+    ["com.affine.timeline.empty"](): string;
+    /**
+      * `Day`
+      */
+    ["com.affine.timeline.grouping.day"](): string;
+    /**
+      * `Week`
+      */
+    ["com.affine.timeline.grouping.week"](): string;
+    /**
+      * `Month`
+      */
+    ["com.affine.timeline.grouping.month"](): string;
+    /**
+      * `Newest first`
+      */
+    ["com.affine.timeline.sort.newest-first"](): string;
+    /**
+      * `Oldest first`
+      */
+    ["com.affine.timeline.sort.oldest-first"](): string;
+    /**
+      * `Open in doc`
+      */
+    ["com.affine.timeline.open-in-doc"](): string;
+    /**
+      * `Timeline`
+      */
+    ["com.affine.workspaceSubPath.timeline"](): string;
+    /**
       * `Trash`
       */
     ["com.affine.workspaceSubPath.trash"](): string;
@@ -7834,6 +7894,14 @@ export function useAFFiNEI18N(): {
       * `Not Template`
       */
     ["com.affine.all-docs.group.is-not-template"](): string;
+    /**
+      * `In Timeline`
+      */
+    ["com.affine.all-docs.group.is-in-timeline"](): string;
+    /**
+      * `Not In Timeline`
+      */
+    ["com.affine.all-docs.group.is-not-in-timeline"](): string;
     /**
       * `Journal`
       */

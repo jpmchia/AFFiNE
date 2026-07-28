@@ -41,4 +41,5 @@ export type BlockMeta = {
   'meta:createdBy'?: string;
   'meta:updatedAt'?: number;
   'meta:updatedBy'?: string;
+  'meta:displayInTimelineAt'?: number;
 };

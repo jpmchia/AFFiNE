@@ -79,6 +79,7 @@ export const defaultAttachmentProps: AttachmentBlockProps = {
   'meta:updatedAt': undefined,
   'meta:createdBy': undefined,
   'meta:updatedBy': undefined,
+  'meta:displayInTimelineAt': undefined,
   footnoteIdentifier: null,
   comments: undefined,
 };

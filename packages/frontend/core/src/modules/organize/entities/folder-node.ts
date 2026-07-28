@@ -18,6 +18,7 @@ export class FolderNode extends Entity<{
     index: string;
     id: string;
     parentId?: string | null;
+    includeInTimelineDefault?: boolean | null;
   } | null>(this.store.watchNodeInfo(this.id ?? ''), null);
   type$ = this.info$.map(info =>
     this.id === null ? 'folder' : (info?.type ?? '')
@@ -53,6 +54,9 @@ export class FolderNode extends Entity<{
       .map(([node]) => node);
   });
   index$ = this.info$.map(info => info?.index ?? '');
+  includeInTimelineDefault$ = this.info$.map(
+    info => info?.includeInTimelineDefault ?? false
+  );
 
   constructor(readonly store: FolderStore) {
     super();
@@ -104,6 +108,26 @@ export class FolderNode extends Entity<{
       throw new Error('Cannot create link on non-folder node');
     }
     this.store.createLink(this.id, type, targetId, index);
+  }
+
+  setIncludeInTimelineDefault(value: boolean) {
+    if (this.id === null) {
+      throw new Error('Cannot set timeline default on root node');
+    }
+    if (this.type$.value !== 'folder') {
+      throw new Error('Cannot set timeline default on non-folder node');
+    }
+    this.store.setIncludeInTimelineDefault(this.id, value);
+  }
+
+  applyIncludeInTimelineToDescendants(value: boolean) {
+    if (this.id === null) {
+      throw new Error('Cannot apply timeline setting on root node');
+    }
+    if (this.type$.value !== 'folder') {
+      throw new Error('Cannot apply timeline setting on non-folder node');
+    }
+    this.store.applyIncludeInTimelineToDescendants(this.id, value);
   }
 
   delete() {

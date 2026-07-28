@@ -60,6 +60,7 @@ export const TableBlockSchema = defineBlockSchema({
     'meta:createdBy': undefined,
     'meta:updatedAt': undefined,
     'meta:updatedBy': undefined,
+    'meta:displayInTimelineAt': undefined,
   }),
   metadata: {
     isFlatData: true,

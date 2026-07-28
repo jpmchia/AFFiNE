@@ -42,6 +42,7 @@ export type WorkspacePropertyTypes = {
   edgelessTheme: { filter: 'is' | 'is-not' };
   pageWidth: { filter: 'is' | 'is-not' };
   template: { filter: 'is' | 'is-not' };
+  includeInTimeline: { filter: 'is' | 'is-not' };
   unknown: { filter: never };
 };
 export type WorkspacePropertyType = keyof WorkspacePropertyTypes;

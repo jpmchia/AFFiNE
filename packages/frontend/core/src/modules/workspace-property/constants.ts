@@ -30,6 +30,12 @@ export const BUILT_IN_CUSTOM_PROPERTY_TYPE: DocCustomPropertyInfo[] = [
     show: 'always-hide',
   },
   {
+    id: 'includeInTimeline',
+    type: 'includeInTimeline',
+    index: 'a00000032',
+    show: 'always-hide',
+  },
+  {
     id: 'createdAt',
     type: 'createdAt',
     index: 'a0000004',

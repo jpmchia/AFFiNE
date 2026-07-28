@@ -3,6 +3,7 @@ import { type BlockModel, StoreExtension } from '@blocksuite/store';
 import { filter, groupBy, mergeMap, throttleTime } from 'rxjs/operators';
 
 import { FeatureFlagService } from './feature-flag-service';
+import { TimelineConfigProvider } from './timeline-service';
 import { WriterInfoProvider } from './user-service';
 
 // 30 seconds
@@ -61,6 +62,7 @@ export class BlockMetaService extends StoreExtension {
     this.store.withoutTransact(() => {
       model.props['meta:createdAt'] = now;
       model.props['meta:createdBy'] = writer.id;
+      this._stampDisplayInTimelineAt(model, now);
     });
   };
 
@@ -82,11 +84,38 @@ export class BlockMetaService extends StoreExtension {
       if (!model.props['meta:createdBy']) {
         model.props['meta:createdBy'] = writer.id;
       }
+      this._stampDisplayInTimelineAt(model, now);
     });
   };
 
   private readonly _getWriterInfo = () => {
     return this.store.getOptional(WriterInfoProvider)?.getWriterInfo();
+  };
+
+  /**
+   * Stamps `meta:displayInTimelineAt` on blocks of docs opted into the
+   * timeline. Never overwrites an existing (possibly user-repositioned)
+   * value.
+   */
+  private readonly _stampDisplayInTimelineAt = (
+    model: BlockModel<BlockMeta>,
+    now: number
+  ): void => {
+    const flagService = this.store.get(FeatureFlagService);
+    if (flagService.getFlag('enable_timeline') !== true) return;
+
+    if (!model.keys.includes('meta:displayInTimelineAt')) return;
+    if (model.props['meta:displayInTimelineAt'] != null) return;
+
+    const config = this.store.getOptional(TimelineConfigProvider);
+    if (!config?.isDocIncludedInTimeline(this.store.id)) return;
+
+    const source = config.defaultDisplayAtSource();
+    const value =
+      source === 'updatedAt'
+        ? (model.props['meta:updatedAt'] ?? now)
+        : (model.props['meta:createdAt'] ?? now);
+    model.props['meta:displayInTimelineAt'] = value;
   };
 }
 

@@ -34,6 +34,7 @@ export const CodeBlockSchema = defineBlockSchema({
       'meta:createdBy': undefined,
       'meta:updatedAt': undefined,
       'meta:updatedBy': undefined,
+      'meta:displayInTimelineAt': undefined,
     }) as CodeBlockProps,
   metadata: {
     version: 1,
