@@ -5,11 +5,12 @@ import {
 } from '@affine/component/setting-components';
 import { useWorkspaceInfo } from '@affine/core/components/hooks/use-workspace-info';
 import { WorkspaceServerService } from '@affine/core/modules/cloud';
+import { FeatureFlagService } from '@affine/core/modules/feature-flag';
 import { WorkspaceService } from '@affine/core/modules/workspace';
 import { UNTITLED_WORKSPACE_NAME } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
 import { ArrowRightSmallIcon } from '@blocksuite/icons/rc';
-import { FrameworkScope, useService } from '@toeverything/infra';
+import { FrameworkScope, useLiveData, useService } from '@toeverything/infra';
 import { useCallback } from 'react';
 
 import { DeleteLeaveWorkspace } from './delete-leave-workspace';
@@ -18,6 +19,7 @@ import { LabelsPanel } from './labels';
 import { ProfilePanel } from './profile';
 import { SharingPanel } from './sharing';
 import { TemplateDocSetting } from './template';
+import { TimelineSettingPanel } from './timeline';
 import type { WorkspaceSettingDetailProps } from './types';
 
 export const WorkspaceSettingDetail = ({
@@ -29,6 +31,10 @@ export const WorkspaceSettingDetail = ({
   const server = workspace?.scope.get(WorkspaceServerService).server;
 
   const workspaceInfo = useWorkspaceInfo(workspace);
+  const featureFlagService = useService(FeatureFlagService);
+  const enableTimeline = useLiveData(
+    featureFlagService.flags.enable_timeline.$
+  );
 
   const handleResetSyncStatus = useCallback(() => {
     workspace?.engine.doc
@@ -63,6 +69,7 @@ export const WorkspaceSettingDetail = ({
         </SettingRow>
       </SettingWrapper>
       <TemplateDocSetting />
+      {enableTimeline && <TimelineSettingPanel />}
       <SharingPanel />
       <SettingWrapper>
         <DeleteLeaveWorkspace onCloseSetting={onCloseSetting} />

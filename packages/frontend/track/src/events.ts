@@ -92,6 +92,7 @@ type FolderEvents =
   | 'deleteFolder';
 type TagEvents = 'createTag' | 'deleteTag' | 'renameTag' | 'tagDoc';
 type FavoriteEvents = 'toggleFavorite';
+type TimelineOrganizeEvents = 'toggleTimeline';
 type OrganizeItemEvents = // doc, link, folder, collection, tag
   | 'createOrganizeItem'
   | 'renameOrganizeItem'
@@ -104,7 +105,8 @@ type OrganizeEvents =
   | CollectionEvents
   | FolderEvents
   | TagEvents
-  | FavoriteEvents;
+  | FavoriteEvents
+  | TimelineOrganizeEvents;
 
 type DNDEvents = 'dragStart' | 'drag' | 'drop';
 // END SECTION
@@ -365,6 +367,7 @@ interface PageEvents extends PageDivision {
         'openInNewTab',
         'openInSplitView',
         'toggleFavorite',
+        'toggleTimeline',
         'drop',
       ];
       docs: ['createDoc', 'deleteDoc', 'linkDoc', 'drop', 'openDoc'];
@@ -700,6 +703,7 @@ export type EventArgs = {
     action: SplitViewActionType;
   };
   toggleFavorite: OrganizeItemArgs & { on: boolean };
+  toggleTimeline: { on: boolean };
   toggle: { type: 'collapse' | 'expand' };
   createDoc: { mode?: 'edgeless' | 'page' };
   quickStart: { with: 'page' | 'edgeless' | 'template' | 'ai' };

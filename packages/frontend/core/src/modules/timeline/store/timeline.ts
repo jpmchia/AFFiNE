@@ -94,6 +94,25 @@ export class TimelineStore extends Store {
   }
 
   /**
+   * Directly updates the `meta:displayInTimelineAt` timestamp on a single
+   * block, e.g. from an inline date editor in the timeline UI.
+   */
+  updateDisplayAt(docId: string, blockId: string, displayAt: number) {
+    const { doc, release } = this.docsService.open(docId);
+    try {
+      const store = doc.blockSuiteDoc;
+      const block = store.getBlock(blockId)?.model;
+      if (!block) return;
+      const props = block.props as Record<string, unknown>;
+      store.withoutTransact(() => {
+        props['meta:displayInTimelineAt'] = displayAt;
+      });
+    } finally {
+      release();
+    }
+  }
+
+  /**
    * Walks a single doc's block tree and collects timeline entries, applying
    * the lazy backfill safety net along the way.
    */

@@ -604,6 +604,7 @@ const NavigationPanelFolderNodeFolder = ({
     const next = !includeInTimelineDefault;
     node.setIncludeInTimelineDefault(next);
     node.applyIncludeInTimelineToDescendants(next);
+    track.$.navigationPanel.organize.toggleTimeline({ on: next });
   }, [includeInTimelineDefault, node]);
 
   const handleCreateSubfolder = useCallback(() => {

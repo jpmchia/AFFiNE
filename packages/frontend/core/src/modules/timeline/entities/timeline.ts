@@ -47,4 +47,8 @@ export class Timeline extends Entity {
     );
     return Object.entries(groups) as [string, TimelineEntry[]][];
   });
+
+  updateDisplayAt(docId: string, blockId: string, displayAt: number) {
+    this.store.updateDisplayAt(docId, blockId, displayAt);
+  }
 }

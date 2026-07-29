@@ -7799,6 +7799,10 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.timeline.open-in-doc"](): string;
     /**
+      * `Click to edit timeline date`
+      */
+    ["com.affine.timeline.edit-date"](): string;
+    /**
       * `Timeline`
       */
     ["com.affine.workspaceSubPath.timeline"](): string;
@@ -8472,6 +8476,26 @@ export function useAFFiNEI18N(): {
       * `Select`
       */
     ["com.affine.template-journal-onboarding.select"](): string;
+    /**
+      * `Timeline`
+      */
+    ["com.affine.settings.workspace.timeline.title"](): string;
+    /**
+      * `Default date source`
+      */
+    ["com.affine.settings.workspace.timeline.default-source"](): string;
+    /**
+      * `Choose whether new blocks in timeline docs default to their created or last updated time.`
+      */
+    ["com.affine.settings.workspace.timeline.default-source-desc"](): string;
+    /**
+      * `Created time`
+      */
+    ["com.affine.settings.workspace.timeline.source.created-at"](): string;
+    /**
+      * `Updated time`
+      */
+    ["com.affine.settings.workspace.timeline.source.updated-at"](): string;
     /**
       * `My Templates`
       */
