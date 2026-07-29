@@ -5,6 +5,7 @@ import {
   DeleteIcon,
   EdgelessIcon,
   ExportToPdfIcon,
+  HistoryIcon,
   PageIcon,
   TagIcon,
   TodayIcon,
@@ -24,6 +25,7 @@ export const iconNameToIcon = {
   attachment: <AttachmentIcon />,
   pdf: <ExportToPdfIcon />,
   ai: <AiIcon />,
+  timeline: <HistoryIcon />,
 } satisfies Record<string, ReactNode>;
 
 export type ViewIconName = keyof typeof iconNameToIcon;
