@@ -9,6 +9,7 @@ import { useCallback, useState } from 'react';
 
 import { Timeline, type TimelineEntry } from '../../../../modules/timeline';
 import * as styles from './index.css';
+import { TimelineItemPreview } from './timeline-item-preview';
 
 export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
   const t = useI18n();
@@ -91,7 +92,7 @@ export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
           </span>
         </Menu>
       </div>
-      <div className={styles.itemExcerpt}>{entry.excerpt}</div>
+      <TimelineItemPreview preview={entry.preview} />
     </div>
   );
 };

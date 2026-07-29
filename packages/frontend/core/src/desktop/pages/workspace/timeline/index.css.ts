@@ -117,6 +117,86 @@ export const itemExcerpt = style({
   overflow: 'hidden',
 });
 
+export const previewRow = style({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 6,
+});
+
+export const listIcon = style({
+  flexShrink: 0,
+  marginTop: 2,
+  color: cssVar('iconColor'),
+});
+
+export const listCheckedIcon = style([
+  listIcon,
+  {
+    color: cssVar('primaryColor'),
+  },
+]);
+
+export const codeExcerpt = style({
+  fontFamily: cssVar('fontCodeFamily'),
+  fontSize: cssVar('fontXs'),
+  color: cssVar('textPrimaryColor'),
+  background: cssVar('backgroundSecondaryColor'),
+  borderRadius: 4,
+  padding: '6px 8px',
+  display: '-webkit-box',
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  wordBreak: 'break-word',
+});
+
+export const codeLanguage = style({
+  display: 'block',
+  fontSize: cssVar('fontXs'),
+  color: cssVar('textSecondaryColor'),
+  marginBottom: 4,
+});
+
+export const imageExcerpt = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+});
+
+export const image = style({
+  maxHeight: 160,
+  maxWidth: '100%',
+  borderRadius: 8,
+  objectFit: 'cover',
+});
+
+export const attachmentSize = style({
+  color: cssVar('textSecondaryColor'),
+});
+
+export const bookmarkExcerpt = style([
+  previewRow,
+  {
+    alignItems: 'center',
+  },
+]);
+
+export const bookmarkText = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  overflow: 'hidden',
+});
+
+export const bookmarkTitle = style({
+  fontSize: cssVar('fontSm'),
+  color: cssVar('textPrimaryColor'),
+  fontWeight: 500,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
 export const emptyContainer = style({
   display: 'flex',
   flex: 1,

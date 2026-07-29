@@ -2,6 +2,7 @@ export { TimelineSetting } from './entities/setting';
 export { Timeline } from './entities/timeline';
 export { TimelineService } from './services/timeline';
 export type {
+  TimelineBlockPreview,
   TimelineDisplayAtSource,
   TimelineEntry,
   TimelineGrouping,

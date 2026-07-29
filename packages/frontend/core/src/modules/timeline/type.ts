@@ -1,3 +1,7 @@
+import type { TimelineBlockPreview } from './utils/block-excerpt';
+
+export type { TimelineBlockPreview } from './utils/block-excerpt';
+
 export type TimelineDisplayAtSource = 'createdAt' | 'updatedAt';
 export type TimelineGrouping = 'day' | 'week' | 'month';
 
@@ -14,4 +18,5 @@ export interface TimelineEntry {
   flavour: string;
   displayInTimelineAt: number;
   excerpt: string;
+  preview: TimelineBlockPreview;
 }

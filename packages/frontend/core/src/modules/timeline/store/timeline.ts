@@ -12,7 +12,7 @@ import type { Transaction } from 'yjs';
 
 import type { DocsService } from '../../doc';
 import type { TimelineDisplayAtSource, TimelineEntry } from '../type';
-import { getBlockExcerpt } from '../utils/block-excerpt';
+import { getBlockExcerpt, getBlockPreview } from '../utils/block-excerpt';
 import type { TimelineSettingStore } from './setting';
 
 function isTimelineSupported(model: BlockModel) {
@@ -154,6 +154,7 @@ export class TimelineStore extends Store {
           flavour: block.flavour,
           displayInTimelineAt: displayAt,
           excerpt: getBlockExcerpt(block),
+          preview: getBlockPreview(block),
         });
       }
 

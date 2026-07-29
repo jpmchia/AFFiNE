@@ -7803,6 +7803,13 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.timeline.edit-date"](): string;
     /**
+      * `Table · {{rows}} rows × {{columns}} columns`
+      */
+    ["com.affine.timeline.preview.table"](options: Readonly<{
+        rows: string;
+        columns: string;
+    }>): string;
+    /**
       * `Timeline`
       */
     ["com.affine.workspaceSubPath.timeline"](): string;
