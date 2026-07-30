@@ -118,6 +118,8 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
   );
 
   const { category, assignedTags } = useEntryLabels(key);
+  const tagColor = assignedTags[0]?.color;
+  const accentColor = tagColor ?? category?.color;
 
   const mergedEntries = entry.mergedEntries;
   const isMerged = !!entry.mergeId && !!mergedEntries;
@@ -384,9 +386,20 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
   const timeFormat = zoomLevel === 'second' ? 'HH:mm:ss' : 'HH:mm';
   const timeLabel = dayjs(entry.displayInTimelineAt).format(timeFormat);
 
+  const isChat =
+    assignedTags.length > 0 &&
+    ['affine:paragraph', 'affine:image', 'affine:attachment'].includes(
+      entry.flavour
+    );
   const cardClassNames = [
     styles.card,
     side === 'left' ? styles.cardLeft : styles.cardRight,
+    isChat ? styles.cardChat : '',
+    isChat
+      ? side === 'left'
+        ? styles.cardChatLeft
+        : styles.cardChatRight
+      : '',
     selected ? styles.cardSelected : '',
     groupId ? styles.cardGrouped : '',
   ]
@@ -521,8 +534,8 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
         className={styles.nodeDot}
         style={{
           top: effectiveAxisY,
-          background: category?.color,
-          borderColor: category?.color,
+          background: accentColor,
+          borderColor: accentColor,
         }}
         data-testid="graphical-timeline-dot"
       />
@@ -532,7 +545,7 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
           top: effectiveAxisY,
           [side === 'left' ? 'right' : 'left']: '50%',
           width: styles.AXIS_CARD_MARGIN,
-          background: category?.color,
+          background: accentColor,
         }}
       />
       {isDragging ? (
@@ -550,8 +563,8 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
           className={cardClassNames}
           style={{
             top: effectiveCardY - 12,
-            // category colours the card border; selection ring wins visually
-            borderColor: selected ? undefined : category?.color,
+            // tag/category colours the card border; selection ring wins visually
+            borderColor: selected ? undefined : accentColor,
           }}
           data-dragging={isDragging}
           data-key={key}
@@ -566,37 +579,43 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
           <div className={styles.cardHeader}>
             {side === 'left' ? (
               <>
-                <DocIcon />
-                <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
-                  {entry.docTitle || t['Untitled']()}
-                </span>
-                <TagPills tags={assignedTags} />
-                {isMerged && mergedEntries ? (
-                  <span className={styles.mergedBadge}>
-                    {t.t('com.affine.timeline.merged-count', {
-                      count: String(mergedEntries.length),
-                    })}
+                <div className={styles.cardTitleGroup}>
+                  <DocIcon />
+                  <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
+                    {entry.docTitle || t['Untitled']()}
                   </span>
-                ) : null}
-                <span className={styles.cardTime}>{timeLabel}</span>
+                </div>
+                <div className={styles.cardMetaGroup}>
+                  {isMerged && mergedEntries ? (
+                    <span className={styles.mergedBadge}>
+                      {t.t('com.affine.timeline.merged-count', {
+                        count: String(mergedEntries.length),
+                      })}
+                    </span>
+                  ) : null}
+                  <TagPills tags={assignedTags} />
+                  <span className={styles.cardTime}>{timeLabel}</span>
+                </div>
               </>
             ) : (
               <>
-                <span className={`${styles.cardTime} ${styles.cardTimeRight}`}>
-                  {timeLabel}
-                </span>
-                {isMerged && mergedEntries ? (
-                  <span className={styles.mergedBadge}>
-                    {t.t('com.affine.timeline.merged-count', {
-                      count: String(mergedEntries.length),
-                    })}
+                <div className={styles.cardMetaGroup}>
+                  <span className={styles.cardTime}>{timeLabel}</span>
+                  <TagPills tags={assignedTags} />
+                  {isMerged && mergedEntries ? (
+                    <span className={styles.mergedBadge}>
+                      {t.t('com.affine.timeline.merged-count', {
+                        count: String(mergedEntries.length),
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+                <div className={styles.cardTitleGroup}>
+                  <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
+                    {entry.docTitle || t['Untitled']()}
                   </span>
-                ) : null}
-                <TagPills tags={assignedTags} />
-                <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
-                  {entry.docTitle || t['Untitled']()}
-                </span>
-                <DocIcon />
+                  <DocIcon />
+                </div>
               </>
             )}
           </div>

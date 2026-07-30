@@ -7896,6 +7896,69 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.timeline.parse-datetime"](): string;
     /**
+      * `Parse tags from content`
+      */
+    ["com.affine.timeline.parse-tags"](): string;
+    /**
+      * `Initially show: {{period}}`
+      */
+    ["com.affine.timeline.load-period"](options: {
+        readonly period: string;
+    }): string;
+    /**
+      * `Last month`
+      */
+    ["com.affine.timeline.load-period.month"](): string;
+    /**
+      * `Last {{count}} months`
+      */
+    ["com.affine.timeline.load-period.months"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `All time`
+      */
+    ["com.affine.timeline.load-period.all"](): string;
+    /**
+      * `Show older entries ({{count}})`
+      */
+    ["com.affine.timeline.show-older"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Show all`
+      */
+    ["com.affine.timeline.show-all"](): string;
+    /**
+      * `Import data`
+      */
+    ["com.affine.timeline.import"](): string;
+    /**
+      * `Import failed`
+      */
+    ["com.affine.timeline.import.failed"](): string;
+    /**
+      * `Select a dataset .json file (optionally together with its media files)`
+      */
+    ["com.affine.timeline.import.no-manifest"](): string;
+    /**
+      * `The dataset file is not valid JSON`
+      */
+    ["com.affine.timeline.import.invalid-json"](): string;
+    /**
+      * `Imported {{count}} entries`
+      */
+    ["com.affine.timeline.import.success"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Imported {{count}} entries, {{skipped}} skipped`
+      */
+    ["com.affine.timeline.import.partial"](options: Readonly<{
+        count: string;
+        skipped: string;
+    }>): string;
+    /**
       * `Unmerge`
       */
     ["com.affine.timeline.selection.unmerge"](): string;

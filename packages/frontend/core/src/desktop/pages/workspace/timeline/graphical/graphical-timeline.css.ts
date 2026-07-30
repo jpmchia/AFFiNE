@@ -137,27 +137,22 @@ export const cardRight = style({
 export const cardHeader = style({
   display: 'flex',
   alignItems: 'center',
-  gap: 6,
-  fontSize: cssVar('fontXs'),
-  color: cssVar('textSecondaryColor'),
+  justifyContent: 'space-between',
+  gap: 8,
   marginBottom: 4,
 });
 
 export const cardTime = style({
-  marginLeft: 'auto',
+  fontSize: cssVar('fontBase'),
+  fontWeight: 700,
+  color: cssVar('textPrimaryColor'),
   whiteSpace: 'nowrap',
 });
 
-// mirrored variant for cards on the right of the axis: the time sits first
-// (nearest the axis) and pushes title + icon to the far edge
-export const cardTimeRight = style({
-  marginLeft: 0,
-  marginRight: 'auto',
-});
-
 export const cardDocTitle = style({
-  fontWeight: 500,
-  color: cssVar('textPrimaryColor'),
+  fontSize: cssVar('fontXs'),
+  fontWeight: 400,
+  color: cssVar('textSecondaryColor'),
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
@@ -178,11 +173,38 @@ export const cardGrouped = style({
   borderStyle: 'dashed',
 });
 
+export const cardChat = style({
+  borderRadius: 16,
+  padding: '10px 14px',
+});
+
+export const cardChatLeft = style({
+  borderTopLeftRadius: 4,
+});
+
+export const cardChatRight = style({
+  borderTopRightRadius: 4,
+});
+
 export const labelDot = style({
   width: 8,
   height: 8,
   borderRadius: '50%',
   flexShrink: 0,
+});
+
+export const cardTitleGroup = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  minWidth: 0,
+});
+
+export const cardMetaGroup = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  minWidth: 0,
 });
 
 export const mergedBadge = style({

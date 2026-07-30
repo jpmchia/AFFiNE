@@ -84,6 +84,11 @@ export interface LayoutOptions {
   groupSpacing?: number;
   /** Extra vertical space reserved before the first entry of a new day. */
   dayMarkerGap?: number;
+  /**
+   * Override the default alternating card side for an entry. Used for
+   * conversation/chat layouts where the side is determined by sender (tag).
+   */
+  sideForEntry?: (entry: TimelineEntry) => 'left' | 'right' | undefined;
 }
 
 export const UNIT_MS: Record<TimelineZoomLevel, number> = {
@@ -311,7 +316,10 @@ export function computeGraphicalTimelineLayout(
   };
 
   items.forEach((item, index) => {
-    let side: 'left' | 'right' = index % 2 === 0 ? 'left' : 'right';
+    const entryForSide = item.kind === 'single' ? item.entry : item.members[0];
+    let side: 'left' | 'right' =
+      options.sideForEntry?.(entryForSide) ??
+      (index % 2 === 0 ? 'left' : 'right');
 
     if (item.kind === 'single') {
       let placed = placeLeading(item.time, side);

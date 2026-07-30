@@ -20,7 +20,9 @@ import {
 import type { TimelineSettingStore } from './setting';
 
 function isTimelineSupported(model: BlockModel) {
-  return model.keys.includes('meta:displayInTimelineAt');
+  if (!model.keys.includes('meta:displayInTimelineAt')) return false;
+  const props = model.props as Record<string, unknown>;
+  return !props['meta:excludeFromTimeline'];
 }
 
 export class TimelineStore extends Store {

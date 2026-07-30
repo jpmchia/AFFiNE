@@ -41,6 +41,7 @@ import {
 } from '../../../../modules/workbench';
 import { BatchProgressProvider } from './batch-progress';
 import { GraphicalTimelineView } from './graphical/graphical-timeline-view';
+import { ImportButton } from './import-button';
 import * as styles from './index.css';
 import { LoadOlderRow } from './load-older-row';
 import { TimelineLabelsSidebar } from './sidebar/labels-sidebar';
@@ -298,6 +299,7 @@ const TimelineHeader = () => {
               </IconButton>
             </>
           )}
+          <ImportButton />
           <LoadPeriodMenu />
           <HiddenEntriesMenu />
           <IconButton

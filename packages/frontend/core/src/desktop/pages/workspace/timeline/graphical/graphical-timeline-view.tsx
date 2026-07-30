@@ -1,4 +1,5 @@
 import { Button, Empty, ScrollableContainer } from '@affine/component';
+import type { TimelineEntry } from '@affine/core/modules/timeline';
 import { Timeline, TimelineSetting } from '@affine/core/modules/timeline';
 import { useI18n } from '@affine/i18n';
 import { useLiveData, useService } from '@toeverything/infra';
@@ -46,6 +47,10 @@ export const GraphicalTimelineView = () => {
   const hideEmptyPeriods = useLiveData(setting.hideEmptyPeriods$) ?? false;
   const entryGroups = useLiveData(setting.entryGroups$);
   const entryMerges = useLiveData(setting.entryMerges$);
+  const tagsRaw = useLiveData(setting.tags$);
+  const entryTagsRaw = useLiveData(setting.entryTags$);
+  const tags = useMemo(() => tagsRaw ?? [], [tagsRaw]);
+  const entryTags = useMemo(() => entryTagsRaw ?? {}, [entryTagsRaw]);
 
   // merged sets collapse into single synthetic entries before layout
   const entries = useMemo(
@@ -80,17 +85,50 @@ export const GraphicalTimelineView = () => {
     );
   }, []);
 
-  const layout = useMemo(
-    () =>
-      computeGraphicalTimelineLayout(entries, {
-        zoomLevel,
-        hideEmptyPeriods,
-        heights,
-        groups: entryGroups,
-        dayMarkerGap: 56,
-      }),
-    [entries, zoomLevel, hideEmptyPeriods, heights, entryGroups]
-  );
+  const layout = useMemo(() => {
+    const tagNameById = new Map(tags.map(t => [t.id, t.name] as const));
+    const tagCounts = new Map<string, number>();
+    for (const entry of rawEntries) {
+      const key = `${entry.docId}:${entry.blockId}`;
+      for (const id of entryTags[key] ?? []) {
+        const name = tagNameById.get(id);
+        if (name) tagCounts.set(name, (tagCounts.get(name) ?? 0) + 1);
+      }
+    }
+    const sorted = [...tagCounts]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+    const sideByTag = new Map<string, 'left' | 'right'>();
+    sorted.forEach((name, i) =>
+      sideByTag.set(name, i % 2 === 0 ? 'right' : 'left')
+    );
+
+    const sideForEntry = (entry: TimelineEntry) => {
+      const key = `${entry.docId}:${entry.blockId}`;
+      const first = (entryTags[key] ?? [])
+        .map(id => tagNameById.get(id))
+        .find((n): n is string => !!n);
+      return first ? sideByTag.get(first) : undefined;
+    };
+
+    return computeGraphicalTimelineLayout(entries, {
+      zoomLevel,
+      hideEmptyPeriods,
+      heights,
+      groups: entryGroups,
+      dayMarkerGap: 56,
+      sideForEntry,
+    });
+  }, [
+    entries,
+    zoomLevel,
+    hideEmptyPeriods,
+    heights,
+    entryGroups,
+    rawEntries,
+    tags,
+    entryTags,
+  ]);
 
   // ---- multi-select state ----
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -299,7 +337,7 @@ export const GraphicalTimelineView = () => {
   }
 
   return (
-    <div className={styles.viewWrapper} onScroll={handleScroll}>
+    <div className={styles.viewWrapper} onScrollCapture={handleScroll}>
       <ScrollableContainer className={pageStyles.scrollArea}>
         <div
           ref={containerRef}
