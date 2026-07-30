@@ -7,7 +7,12 @@ import { useLiveData, useService } from '@toeverything/infra';
 import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';
 
-import { Timeline, type TimelineEntry } from '../../../../modules/timeline';
+import {
+  Timeline,
+  type TimelineEntry,
+  TimelineSetting,
+} from '../../../../modules/timeline';
+import { categoryBorderStyle, TagPills, useEntryLabels } from './entry-labels';
 import * as styles from './index.css';
 import { TimelineItemPreview } from './timeline-item-preview';
 
@@ -18,6 +23,12 @@ export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
   const timeline = useService(Timeline);
   const docDisplayMetaService = useService(DocDisplayMetaService);
   const DocIcon = useLiveData(docDisplayMetaService.icon$(entry.docId));
+  const setting = useService(TimelineSetting);
+  const datePrefixes = useLiveData(setting.entryDatePrefixes$) ?? {};
+  const tagPrefixes = useLiveData(setting.entryTagPrefixes$) ?? {};
+  const { category, assignedTags } = useEntryLabels(
+    `${entry.docId}:${entry.blockId}`
+  );
   const [draftValue, setDraftValue] = useState(() =>
     dayjs(entry.displayInTimelineAt).format('YYYY-MM-DDTHH:mm')
   );
@@ -60,6 +71,7 @@ export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
   return (
     <div
       className={styles.item}
+      style={categoryBorderStyle(category)}
       onClick={handleOpen}
       data-testid="timeline-item"
     >
@@ -68,6 +80,7 @@ export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
         <span className={styles.itemDocTitle} onClick={handleOpenDoc}>
           {entry.docTitle || t['Untitled']()}
         </span>
+        <TagPills tags={assignedTags} />
         <Menu
           items={
             <div className={styles.dateEditor} onClick={handleTimeClick}>
@@ -92,7 +105,11 @@ export const TimelineItem = ({ entry }: { entry: TimelineEntry }) => {
           </span>
         </Menu>
       </div>
-      <TimelineItemPreview preview={entry.preview} />
+      <TimelineItemPreview
+        preview={entry.preview}
+        hidePrefix={datePrefixes[`${entry.docId}:${entry.blockId}`]}
+        hideTagPrefix={tagPrefixes[`${entry.docId}:${entry.blockId}`]}
+      />
     </div>
   );
 };

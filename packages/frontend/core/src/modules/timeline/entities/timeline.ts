@@ -19,6 +19,8 @@ function groupKey(timestamp: number, grouping: TimelineGrouping): string {
   return date.toISOString().slice(0, 10);
 }
 
+export const DEFAULT_INITIAL_LOAD_MONTHS = 3;
+
 export class Timeline extends Entity {
   constructor(
     private readonly store: TimelineStore,
@@ -27,7 +29,59 @@ export class Timeline extends Entity {
     super();
   }
 
-  entries$ = LiveData.from<TimelineEntry[]>(this.store.watchEntries(), []);
+  allEntries$ = LiveData.from<TimelineEntry[]>(this.store.watchEntries(), []);
+
+  private readonly unwindowedEntries$ = LiveData.computed(get => {
+    const entries = get(this.allEntries$);
+    const hidden = get(this.setting.hiddenEntries$);
+    if (!hidden || hidden.length === 0) return entries;
+    const hiddenSet = new Set(hidden);
+    return entries.filter(
+      entry => !hiddenSet.has(`${entry.docId}:${entry.blockId}`)
+    );
+  });
+
+  /** Extra months loaded on demand beyond the configured initial window. */
+  private readonly extendedMonths$ = new LiveData<number>(0);
+
+  /** Oldest visible timestamp, or null when everything is shown. */
+  loadCutoff$ = LiveData.computed(get => {
+    const months =
+      get(this.setting.initialLoadMonths$) ?? DEFAULT_INITIAL_LOAD_MONTHS;
+    if (months <= 0) return null;
+    const extended = get(this.extendedMonths$);
+    if (!Number.isFinite(extended)) return null;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - (months + extended));
+    return cutoff.getTime();
+  });
+
+  private readonly windowed$ = LiveData.computed(get => {
+    const entries = get(this.unwindowedEntries$);
+    const cutoff = get(this.loadCutoff$);
+    if (cutoff === null) return { entries, olderCount: 0 };
+    const visible = entries.filter(
+      entry => entry.displayInTimelineAt >= cutoff
+    );
+    return { entries: visible, olderCount: entries.length - visible.length };
+  });
+
+  entries$ = LiveData.computed(get => get(this.windowed$).entries);
+
+  /** Entries currently hidden by the initial-load window. */
+  olderCount$ = LiveData.computed(get => get(this.windowed$).olderCount);
+
+  /** Extends the visible window back by one more configured period. */
+  loadOlder() {
+    const months =
+      this.setting.initialLoadMonths$.value ?? DEFAULT_INITIAL_LOAD_MONTHS;
+    this.extendedMonths$.next(this.extendedMonths$.value + Math.max(months, 1));
+  }
+
+  /** Removes the window entirely for this session. */
+  loadAll() {
+    this.extendedMonths$.next(Infinity);
+  }
 
   sortedEntries$ = LiveData.computed(get => {
     const entries = get(this.entries$);
@@ -50,5 +104,12 @@ export class Timeline extends Entity {
 
   updateDisplayAt(docId: string, blockId: string, displayAt: number) {
     this.store.updateDisplayAt(docId, blockId, displayAt);
+  }
+
+  /** Applies many display-at updates with one transaction per doc. */
+  updateDisplayAtBatch(
+    updates: { docId: string; blockId: string; displayAt: number }[]
+  ) {
+    this.store.updateDisplayAtBatch(updates);
   }
 }

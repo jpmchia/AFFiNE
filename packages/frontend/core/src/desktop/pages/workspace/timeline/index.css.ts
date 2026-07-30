@@ -21,6 +21,29 @@ export const headerControls = style({
   gap: 8,
 });
 
+export const zoomControls = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+});
+
+export const zoomLabel = style({
+  fontSize: cssVar('fontXs'),
+  color: cssVar('textSecondaryColor'),
+  minWidth: 44,
+  textAlign: 'center',
+  userSelect: 'none',
+});
+
+export const hideEmptyToggle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  fontSize: cssVar('fontXs'),
+  color: cssVar('textSecondaryColor'),
+  cursor: 'pointer',
+});
+
 export const body = style({
   display: 'flex',
   flexDirection: 'column',
@@ -195,6 +218,13 @@ export const bookmarkTitle = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+});
+
+export const loadOlderRow = style({
+  display: 'flex',
+  justifyContent: 'center',
+  gap: 8,
+  padding: '16px 0 32px',
 });
 
 export const emptyContainer = style({

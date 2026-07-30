@@ -12,7 +12,11 @@ import type { Transaction } from 'yjs';
 
 import type { DocsService } from '../../doc';
 import type { TimelineDisplayAtSource, TimelineEntry } from '../type';
-import { getBlockExcerpt, getBlockPreview } from '../utils/block-excerpt';
+import {
+  getBlockExcerpt,
+  getBlockPreview,
+  isEmptyTextBlock,
+} from '../utils/block-excerpt';
 import type { TimelineSettingStore } from './setting';
 
 function isTimelineSupported(model: BlockModel) {
@@ -98,17 +102,38 @@ export class TimelineStore extends Store {
    * block, e.g. from an inline date editor in the timeline UI.
    */
   updateDisplayAt(docId: string, blockId: string, displayAt: number) {
-    const { doc, release } = this.docsService.open(docId);
-    try {
-      const store = doc.blockSuiteDoc;
-      const block = store.getBlock(blockId)?.model;
-      if (!block) return;
-      const props = block.props as Record<string, unknown>;
-      store.withoutTransact(() => {
-        props['meta:displayInTimelineAt'] = displayAt;
-      });
-    } finally {
-      release();
+    this.updateDisplayAtBatch([{ docId, blockId, displayAt }]);
+  }
+
+  /**
+   * Applies many `meta:displayInTimelineAt` updates with a single yjs
+   * transaction per doc, so watchers recompute once instead of per block.
+   */
+  updateDisplayAtBatch(
+    updates: { docId: string; blockId: string; displayAt: number }[]
+  ) {
+    const byDoc = new Map<string, { blockId: string; displayAt: number }[]>();
+    for (const update of updates) {
+      const docUpdates = byDoc.get(update.docId) ?? [];
+      docUpdates.push(update);
+      byDoc.set(update.docId, docUpdates);
+    }
+    for (const [docId, docUpdates] of byDoc) {
+      const { doc, release } = this.docsService.open(docId);
+      try {
+        const store = doc.blockSuiteDoc;
+        store.withoutTransact(() => {
+          for (const { blockId, displayAt } of docUpdates) {
+            const block = store.getBlock(blockId)?.model;
+            if (!block) continue;
+            (block.props as Record<string, unknown>)[
+              'meta:displayInTimelineAt'
+            ] = displayAt;
+          }
+        });
+      } finally {
+        release();
+      }
     }
   }
 
@@ -118,9 +143,12 @@ export class TimelineStore extends Store {
    */
   private collectDocEntries(
     docId: string,
-    defaultSource: TimelineDisplayAtSource
+    defaultSource: TimelineDisplayAtSource,
+    backfill: boolean
   ): TimelineEntry[] {
-    this.backfillDoc(docId, defaultSource);
+    if (backfill) {
+      this.backfillDoc(docId, defaultSource);
+    }
 
     const { doc, release } = this.docsService.open(docId);
     try {
@@ -140,6 +168,7 @@ export class TimelineStore extends Store {
         }
         if (block.flavour === 'affine:surface') continue;
         if (!isTimelineSupported(block)) continue;
+        if (isEmptyTextBlock(block)) continue;
 
         const props = block.props as Record<string, unknown>;
         const displayAt = props['meta:displayInTimelineAt'] as
@@ -181,11 +210,35 @@ export class TimelineStore extends Store {
             this.settingStore.getSettingKey('defaultDisplayAtSource') ??
             'createdAt';
 
+          // per-doc entry cache: only docs whose yDoc actually changed are
+          // re-walked; the rest reuse their cached entries
+          const cache = new Map<string, TimelineEntry[]>();
+          const dirty = new Set<string>(docIds);
+
+          // the backfill safety net only needs to run once per subscription;
+          // afterwards recomputes skip the extra tree walk
+          let backfilled = false;
           const recompute = () => {
-            const entries = docIds.flatMap(docId =>
-              this.collectDocEntries(docId, defaultSource)
-            );
-            subscriber.next(entries);
+            for (const docId of dirty) {
+              cache.set(
+                docId,
+                this.collectDocEntries(docId, defaultSource, !backfilled)
+              );
+            }
+            dirty.clear();
+            backfilled = true;
+            subscriber.next(docIds.flatMap(docId => cache.get(docId) ?? []));
+          };
+
+          // coalesce bursts of transactions (typing, batched updates) into a
+          // single recompute instead of one full re-collect per transaction
+          let recomputeTimer: ReturnType<typeof setTimeout> | null = null;
+          const scheduleRecompute = () => {
+            if (recomputeTimer !== null) clearTimeout(recomputeTimer);
+            recomputeTimer = setTimeout(() => {
+              recomputeTimer = null;
+              recompute();
+            }, 150);
           };
 
           const releases: (() => void)[] = [];
@@ -195,7 +248,10 @@ export class TimelineStore extends Store {
             const { doc, release } = this.docsService.open(docId);
             releases.push(release);
             const handler = (trx: Transaction) => {
-              if (trx.local) recompute();
+              if (trx.local) {
+                dirty.add(docId);
+                scheduleRecompute();
+              }
             };
             doc.yDoc.on('afterTransaction', handler);
             unsubscribes.push(() => doc.yDoc.off('afterTransaction', handler));
@@ -204,10 +260,11 @@ export class TimelineStore extends Store {
           recompute();
 
           return () => {
+            if (recomputeTimer !== null) clearTimeout(recomputeTimer);
             unsubscribes.forEach(fn => fn());
             releases.forEach(fn => fn());
           };
-        }).pipe(debounceTime(300));
+        });
       })
     );
   }

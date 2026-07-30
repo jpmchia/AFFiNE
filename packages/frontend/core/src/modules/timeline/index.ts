@@ -1,13 +1,23 @@
-export { TimelineSetting } from './entities/setting';
-export { Timeline } from './entities/timeline';
+export { TIMELINE_LABEL_COLORS, TimelineSetting } from './entities/setting';
+export { DEFAULT_INITIAL_LOAD_MONTHS, Timeline } from './entities/timeline';
 export { TimelineService } from './services/timeline';
 export type {
   TimelineBlockPreview,
   TimelineDisplayAtSource,
   TimelineEntry,
+  TimelineEntrySet,
   TimelineGrouping,
+  TimelineLabel,
   TimelineSettings,
+  TimelineViewMode,
+  TimelineZoomLevel,
 } from './type';
+export {
+  parseLeadingDateTime,
+  stripParsedPrefix,
+  stripParsedPrefixes,
+} from './utils/parse-leading-datetime';
+export { parseLeadingTag } from './utils/parse-leading-tag';
 
 import type { Framework } from '@toeverything/infra';
 

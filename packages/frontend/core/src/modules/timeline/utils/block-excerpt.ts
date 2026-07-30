@@ -20,6 +20,19 @@ export function getBlockExcerpt(block: BlockModel): string {
   return type ? `[${type}]` : '';
 }
 
+/**
+ * Returns true for text-bearing blocks (paragraph, list, code, callout, ...)
+ * whose text content is empty or whitespace-only. Such blocks would only
+ * render a generic `[paragraph]`-style placeholder in the timeline, so they
+ * are hidden by default. Blocks without a `text` field (image, attachment,
+ * bookmark, ...) are never considered empty by this check.
+ */
+export function isEmptyTextBlock(block: BlockModel): boolean {
+  const text = (block as { text?: { toString(): string } }).text;
+  if (!text) return false;
+  return text.toString().trim().length === 0;
+}
+
 export type TimelineBlockPreview =
   | { kind: 'text'; text: string }
   | { kind: 'list'; text: string; listType: string; checked: boolean }

@@ -7810,6 +7810,142 @@ export function useAFFiNEI18N(): {
         columns: string;
     }>): string;
     /**
+      * `Switch to list view`
+      */
+    ["com.affine.timeline.view.list"](): string;
+    /**
+      * `Switch to graphical view`
+      */
+    ["com.affine.timeline.view.graphical"](): string;
+    /**
+      * `Zoom in`
+      */
+    ["com.affine.timeline.zoom.in"](): string;
+    /**
+      * `Zoom out`
+      */
+    ["com.affine.timeline.zoom.out"](): string;
+    /**
+      * `Hour`
+      */
+    ["com.affine.timeline.zoom.hour"](): string;
+    /**
+      * `Minute`
+      */
+    ["com.affine.timeline.zoom.minute"](): string;
+    /**
+      * `Second`
+      */
+    ["com.affine.timeline.zoom.second"](): string;
+    /**
+      * `Hide empty periods`
+      */
+    ["com.affine.timeline.graphical.hide-empty-periods"](): string;
+    /**
+      * `{{duration}} gap`
+      */
+    ["com.affine.timeline.graphical.gap"](options: {
+        readonly duration: string;
+    }): string;
+    /**
+      * `Remove from timeline`
+      */
+    ["com.affine.timeline.remove-from-timeline"](): string;
+    /**
+      * `Hidden entries ({{count}})`
+      */
+    ["com.affine.timeline.hidden-entries"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Restore all`
+      */
+    ["com.affine.timeline.hidden-entries.restore-all"](): string;
+    /**
+      * `{{count}} selected`
+      */
+    ["com.affine.timeline.selection.count"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Group`
+      */
+    ["com.affine.timeline.selection.group"](): string;
+    /**
+      * `Ungroup`
+      */
+    ["com.affine.timeline.selection.ungroup"](): string;
+    /**
+      * `Merge`
+      */
+    ["com.affine.timeline.selection.merge"](): string;
+    /**
+      * `Group {{count}} items`
+      */
+    ["com.affine.timeline.selection.group-count"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Merge {{count}} items`
+      */
+    ["com.affine.timeline.selection.merge-count"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Parse date / time from content`
+      */
+    ["com.affine.timeline.parse-datetime"](): string;
+    /**
+      * `Unmerge`
+      */
+    ["com.affine.timeline.selection.unmerge"](): string;
+    /**
+      * `Clear`
+      */
+    ["com.affine.timeline.selection.clear"](): string;
+    /**
+      * `{{count}} merged`
+      */
+    ["com.affine.timeline.merged-count"](options: {
+        readonly count: string;
+    }): string;
+    /**
+      * `Tags`
+      */
+    ["com.affine.timeline.tags"](): string;
+    /**
+      * `New tag`
+      */
+    ["com.affine.timeline.tags.new"](): string;
+    /**
+      * `Tag {{number}}`
+      */
+    ["com.affine.timeline.tags.default-name"](options: {
+        readonly number: string;
+    }): string;
+    /**
+      * `No tags yet. Create one to label timeline entries.`
+      */
+    ["com.affine.timeline.tags.empty"](): string;
+    /**
+      * `Category`
+      */
+    ["com.affine.timeline.categories"](): string;
+    /**
+      * `New category`
+      */
+    ["com.affine.timeline.categories.new"](): string;
+    /**
+      * `Category {{number}}`
+      */
+    ["com.affine.timeline.categories.default-name"](options: {
+        readonly number: string;
+    }): string;
+    /**
+      * `No categories yet. Create one to colour-code timeline entries.`
+      */
+    ["com.affine.timeline.categories.empty"](): string;
+    /**
       * `Timeline`
       */
     ["com.affine.workspaceSubPath.timeline"](): string;
