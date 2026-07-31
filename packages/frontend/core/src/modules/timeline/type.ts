@@ -65,6 +65,8 @@ export interface TimelineEntry {
   blockId: string;
   flavour: string;
   displayInTimelineAt: number;
+  /** Optional end of a timeline period, in epoch milliseconds. */
+  displayInTimelineEndAt?: number;
   excerpt: string;
   preview: TimelineBlockPreview;
 }

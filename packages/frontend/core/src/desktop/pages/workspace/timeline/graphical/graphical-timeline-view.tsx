@@ -318,9 +318,11 @@ export const GraphicalTimelineView = () => {
       layout.nodes.filter(node => {
         const key = entryKey(node.entry);
         const top = Math.min(node.axisY, node.cardY - 12);
-        const height =
-          Math.max(0, node.cardY - node.axisY) +
-          (heights[key] ?? ESTIMATED_CARD_HEIGHT);
+        const bottom = Math.max(
+          node.axisEndY ?? node.axisY,
+          node.cardY + (heights[key] ?? ESTIMATED_CARD_HEIGHT)
+        );
+        const height = Math.max(0, bottom - top);
         return inRange(top, height);
       }),
     [layout.nodes, heights, inRange]

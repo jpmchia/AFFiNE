@@ -1,5 +1,6 @@
 export { TIMELINE_LABEL_COLORS, TimelineSetting } from './entities/setting';
 export { DEFAULT_INITIAL_LOAD_MONTHS, Timeline } from './entities/timeline';
+export { parseTimelineCSV } from './import/csv';
 export { TimelineImportService } from './import/import';
 export {
   parseTimelineDataset,

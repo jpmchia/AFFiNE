@@ -25,8 +25,12 @@ export interface TimelineDayMarker {
 export interface TimelineNodeLayout {
   entry: TimelineEntry;
   side: 'left' | 'right';
-  /** Vertical position of the dot on the centerline (== card anchor). */
+  /** Whether this node spans a period between axisY and axisEndY. */
+  isPeriod: boolean;
+  /** Vertical position of the dot / block start on the centerline. */
   axisY: number;
+  /** For periods, vertical position of the block end on the centerline. */
+  axisEndY?: number;
   /** Vertical position of the top of the card. */
   cardY: number;
   /** Set when the entry belongs to a fixed group. */
@@ -203,18 +207,20 @@ export function computeGraphicalTimelineLayout(
   }
 
   type LayoutItem =
-    | { kind: 'single'; entry: TimelineEntry; time: number }
+    | { kind: 'single'; entry: TimelineEntry; time: number; endTime?: number }
     | {
         kind: 'group';
         id: string;
         members: TimelineEntry[];
         time: number;
+        endTime?: number;
       };
 
   const items: LayoutItem[] = singleEntries.map(entry => ({
     kind: 'single' as const,
     entry,
     time: entry.displayInTimelineAt,
+    endTime: entry.displayInTimelineEndAt,
   }));
   for (const [id, members] of groupMembers) {
     if (members.length < 2) {
@@ -223,6 +229,7 @@ export function computeGraphicalTimelineLayout(
           kind: 'single',
           entry,
           time: entry.displayInTimelineAt,
+          endTime: entry.displayInTimelineEndAt,
         });
       }
     } else {
@@ -231,6 +238,7 @@ export function computeGraphicalTimelineLayout(
         id,
         members,
         time: members[0].displayInTimelineAt,
+        endTime: undefined,
       });
     }
   }
@@ -293,15 +301,40 @@ export function computeGraphicalTimelineLayout(
     };
   };
 
+  // Positions the end of a period relative to its start, using the same
+  // time-proportional scale but ignoring content stacking so the block
+  // can overlap subsequent point-in-time entries.
+  const placeEnd = (startY: number, startTime: number, endTime: number) => {
+    if (endTime <= startTime) return startY;
+    const timeDelta = endTime - startTime;
+    const collapsed = options.hideEmptyPeriods && timeDelta > maxGapMs;
+    const timeGapPx = collapsed
+      ? collapsedGapPx
+      : Math.min(timeDelta * pxPerMs, maxGapPx);
+    const gap = collapsed ? timeGapPx : Math.max(timeGapPx, minDotGap);
+    return startY + gap;
+  };
+
   const commit = (
     entry: TimelineEntry,
     side: 'left' | 'right',
     axisY: number,
+    cardY: number,
+    isPeriod: boolean,
+    axisEndY: number | undefined,
     groupId?: string
   ) => {
-    nodes.push({ entry, side, axisY, cardY: axisY, groupId });
+    nodes.push({
+      entry,
+      side,
+      isPeriod,
+      axisY,
+      axisEndY,
+      cardY,
+      groupId,
+    });
     anchors.push({ time: entry.displayInTimelineAt, y: axisY });
-    lastBottomBySide[side] = axisY + heightOf(entry);
+    lastBottomBySide[side] = cardY + heightOf(entry);
     prevAxisY = axisY;
     prevTime = entry.displayInTimelineAt;
   };
@@ -322,6 +355,8 @@ export function computeGraphicalTimelineLayout(
       (index % 2 === 0 ? 'left' : 'right');
 
     if (item.kind === 'single') {
+      const endTime = item.endTime;
+      const isPeriod = endTime != null && endTime > item.time;
       let placed = placeLeading(item.time, side);
       // never interleave with a fixed group: if this entry lands inside a
       // group's vertical range on the same side, flip to the other side
@@ -339,7 +374,13 @@ export function computeGraphicalTimelineLayout(
       if (placed.collapsed) {
         markCollapsed(prevAxisY, axisY, item.time);
       }
-      commit(item.entry, side, axisY, undefined);
+      const axisEndY = isPeriod
+        ? placeEnd(axisY, item.time, endTime ?? item.time)
+        : undefined;
+      // Anchor the period card at the start; it can be dynamically offset
+      // later if it overlaps a previous card on the same side.
+      const cardY = axisY;
+      commit(item.entry, side, axisY, cardY, isPeriod, axisEndY, undefined);
     } else {
       // fixed group: contiguous members on one side, reduced spacing
       const placed = placeLeading(item.time, side);
@@ -348,10 +389,29 @@ export function computeGraphicalTimelineLayout(
         markCollapsed(prevAxisY, axisY, item.time);
       }
       const top = axisY;
-      commit(item.members[0], side, axisY, item.id);
+      commit(item.members[0], side, axisY, axisY, false, undefined, item.id);
       for (let i = 1; i < item.members.length; i++) {
-        const axisY = lastBottomBySide[side] + groupSpacing;
-        commit(item.members[i], side, axisY, item.id);
+        const memberY = lastBottomBySide[side] + groupSpacing;
+        const member = item.members[i];
+        const memberEnd = member.displayInTimelineEndAt;
+        const memberPeriod =
+          memberEnd != null && memberEnd > member.displayInTimelineAt;
+        const memberAxisEnd = memberPeriod
+          ? placeEnd(
+              memberY,
+              member.displayInTimelineAt,
+              memberEnd ?? member.displayInTimelineAt
+            )
+          : undefined;
+        commit(
+          member,
+          side,
+          memberY,
+          memberY,
+          memberPeriod,
+          memberAxisEnd,
+          item.id
+        );
       }
       groupRanges.push({
         side,

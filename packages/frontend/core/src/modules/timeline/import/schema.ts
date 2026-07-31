@@ -16,6 +16,7 @@
  *   "entries": [
  *     {
  *       "displayAt": "2026-07-12T09:30:00Z", // ISO string or epoch ms
+ *       "endAt": "2026-07-12T10:15:00Z",     // optional end of a period
  *       "text": "Did the thing",             // paragraph content
  *       "media": "photos/img1.jpg",          // optional media file reference
  *       "tags": ["work"],                    // tag names
@@ -35,6 +36,8 @@ export interface TimelineImportLabelDef {
 export interface TimelineImportEntry {
   /** Normalized to epoch milliseconds. */
   displayAt: number;
+  /** Optional end of a timeline period, in epoch milliseconds. */
+  endAt?: number;
   text?: string;
   /** Path or file name referencing a media file shipped with the dataset. */
   media?: string;
@@ -144,6 +147,11 @@ export function parseTimelineDataset(
       );
       return;
     }
+    const endAt = parseDisplayAt(raw.endAt);
+    if (endAt !== null && endAt <= displayAt) {
+      errors.push(`"entries[${i}].endAt" must be later than "displayAt"`);
+      return;
+    }
     const text =
       typeof raw.text === 'string' && raw.text.trim() ? raw.text : undefined;
     const media =
@@ -175,7 +183,14 @@ export function parseTimelineDataset(
       }
       category = raw.category.trim();
     }
-    entries.push({ displayAt, text, media, tags: entryTags, category });
+    entries.push({
+      displayAt,
+      endAt: endAt ?? undefined,
+      text,
+      media,
+      tags: entryTags,
+      category,
+    });
   });
 
   if (errors.length > 0) {

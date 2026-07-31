@@ -90,7 +90,7 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
   onMergeSelection: () => void;
   onHeightChange: (key: string, height: number) => void;
 }) {
-  const { side, axisY, cardY, groupId } = node;
+  const { side, axisY, cardY, groupId, isPeriod, axisEndY } = node;
   const entry = node.entry as MergedTimelineEntry;
   const key = entryKey(entry);
   const t = useI18n();
@@ -168,13 +168,14 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
       if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (isPeriod) return;
       // ignore drags starting on the native resize handle (bottom-right corner)
       const rect = e.currentTarget.getBoundingClientRect();
       if (rect.right - e.clientX < 16 && rect.bottom - e.clientY < 16) return;
       dragStartRef.current = { pointerY: e.clientY, axisY: node.axisY };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [node.axisY]
+    [node.axisY, isPeriod]
   );
 
   const handlePointerMove = useCallback(
@@ -384,7 +385,14 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
     ? yToTime(layout, dragY, zoomLevel, key)
     : entry.displayInTimelineAt;
   const timeFormat = zoomLevel === 'second' ? 'HH:mm:ss' : 'HH:mm';
-  const timeLabel = dayjs(entry.displayInTimelineAt).format(timeFormat);
+  const endAt = entry.displayInTimelineEndAt;
+  const startTime = entry.displayInTimelineAt;
+  let timeLabel = dayjs(startTime).format(timeFormat);
+  if (endAt) {
+    const isSameDay = dayjs(startTime).isSame(endAt, 'day');
+    const endFormat = isSameDay ? timeFormat : `MMM D, ${timeFormat}`;
+    timeLabel = `${timeLabel} — ${dayjs(endAt).format(endFormat)}`;
+  }
 
   const isChat =
     assignedTags.length > 0 &&
@@ -530,15 +538,28 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
 
   return (
     <>
-      <div
-        className={styles.nodeDot}
-        style={{
-          top: effectiveAxisY,
-          background: accentColor,
-          borderColor: accentColor,
-        }}
-        data-testid="graphical-timeline-dot"
-      />
+      {isPeriod && axisEndY != null ? (
+        <div
+          className={styles.periodBlock}
+          style={{
+            top: effectiveAxisY,
+            height: Math.max(axisEndY - effectiveAxisY, 0),
+            background: accentColor,
+          }}
+          data-testid="graphical-timeline-period"
+        />
+      ) : null}
+      {!isPeriod ? (
+        <div
+          className={styles.nodeDot}
+          style={{
+            top: effectiveAxisY,
+            background: accentColor,
+            borderColor: accentColor,
+          }}
+          data-testid="graphical-timeline-dot"
+        />
+      ) : null}
       <div
         className={styles.connector}
         style={{

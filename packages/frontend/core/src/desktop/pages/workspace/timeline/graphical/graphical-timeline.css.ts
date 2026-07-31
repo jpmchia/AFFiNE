@@ -87,6 +87,17 @@ export const nodeDot = style({
   pointerEvents: 'none',
 });
 
+export const periodBlock = style({
+  position: 'absolute',
+  left: '50%',
+  width: 6,
+  borderRadius: 3,
+  transform: 'translateX(-50%)',
+  zIndex: 1,
+  pointerEvents: 'none',
+  opacity: 0.75,
+});
+
 export const connector = style({
   position: 'absolute',
   height: 2,

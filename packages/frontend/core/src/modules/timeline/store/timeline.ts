@@ -177,6 +177,9 @@ export class TimelineStore extends Store {
           | number
           | undefined;
         if (displayAt == null) continue;
+        const displayEndAt = props['meta:displayInTimelineEndAt'] as
+          | number
+          | undefined;
 
         entries.push({
           docId,
@@ -184,6 +187,10 @@ export class TimelineStore extends Store {
           blockId: block.id,
           flavour: block.flavour,
           displayInTimelineAt: displayAt,
+          displayInTimelineEndAt:
+            typeof displayEndAt === 'number' && displayEndAt > displayAt
+              ? displayEndAt
+              : undefined,
           excerpt: getBlockExcerpt(block),
           preview: getBlockPreview(block),
         });

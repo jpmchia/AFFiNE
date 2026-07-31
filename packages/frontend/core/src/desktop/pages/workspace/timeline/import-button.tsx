@@ -1,6 +1,8 @@
 import { IconButton, notify } from '@affine/component';
 import {
+  parseTimelineCSV,
   parseTimelineDataset,
+  type TimelineImportDataset,
   TimelineImportService,
 } from '@affine/core/modules/timeline';
 import { useI18n } from '@affine/i18n';
@@ -9,9 +11,10 @@ import { useService } from '@toeverything/infra';
 import { useCallback, useRef, useState } from 'react';
 
 /**
- * Header action that bulk-imports a timeline dataset: a JSON manifest plus
- * optional media files (images become image blocks, everything else becomes
- * attachment blocks). See `modules/timeline/import/schema.ts` for the format.
+ * Header action that bulk-imports a timeline dataset from a JSON manifest or a
+ * CSV/TSV file. JSON imports may ship optional media files; CSV/TSV imports
+ * contain only the tabular data. See `modules/timeline/import/schema.ts` and
+ * `modules/timeline/import/csv.ts` for the formats.
  */
 export const ImportButton = () => {
   const t = useI18n();
@@ -25,42 +28,68 @@ export const ImportButton = () => {
       const manifestFile = files.find(f =>
         f.name.toLowerCase().endsWith('.json')
       );
-      if (!manifestFile) {
+      const csvFile = files.find(f => {
+        const name = f.name.toLowerCase();
+        return (
+          name.endsWith('.csv') ||
+          name.endsWith('.tsv') ||
+          name.endsWith('.txt')
+        );
+      });
+
+      if (!manifestFile && !csvFile) {
         notify.error({
           title: t['com.affine.timeline.import.failed'](),
-          message: t['com.affine.timeline.import.no-manifest'](),
+          message: 'Please select a JSON manifest or a CSV/TSV file.',
         });
         return;
       }
 
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(await manifestFile.text());
-      } catch {
-        notify.error({
-          title: t['com.affine.timeline.import.failed'](),
-          message: t['com.affine.timeline.import.invalid-json'](),
-        });
-        return;
+      let dataset: TimelineImportDataset | undefined;
+      let errors: string[] = [];
+      let mediaFiles = new Map<string, File>();
+
+      if (manifestFile) {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(await manifestFile.text());
+        } catch {
+          notify.error({
+            title: t['com.affine.timeline.import.failed'](),
+            message: t['com.affine.timeline.import.invalid-json'](),
+          });
+          return;
+        }
+        const result = parseTimelineDataset(parsed);
+        dataset = result.dataset;
+        errors = result.errors;
+
+        mediaFiles = new Map<string, File>();
+        for (const file of files) {
+          if (file === manifestFile) continue;
+          const key =
+            (file as File & { webkitRelativePath?: string })
+              .webkitRelativePath || file.name;
+          // keys are also matched by base name, see resolveMediaFile
+          mediaFiles.set(key, file);
+        }
+      } else if (csvFile) {
+        const source = await csvFile.text();
+        const result = parseTimelineCSV(source);
+        dataset = result.dataset;
+        errors = result.errors;
+
+        if (dataset) {
+          dataset.docTitle = csvFile.name.replace(/\.[^.]+$/, '');
+        }
       }
 
-      const { dataset, errors } = parseTimelineDataset(parsed);
       if (!dataset) {
         notify.error({
           title: t['com.affine.timeline.import.failed'](),
           message: errors.slice(0, 5).join('\n'),
         });
         return;
-      }
-
-      const mediaFiles = new Map<string, File>();
-      for (const file of files) {
-        if (file === manifestFile) continue;
-        const key =
-          (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
-          file.name;
-        // keys are also matched by base name, see resolveMediaFile
-        mediaFiles.set(key, file);
       }
 
       setImporting(true);
@@ -109,6 +138,7 @@ export const ImportButton = () => {
       <input
         ref={inputRef}
         type="file"
+        accept=".json,.csv,.tsv,.txt"
         multiple
         style={{ display: 'none' }}
         onChange={handleChange}

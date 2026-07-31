@@ -93,11 +93,14 @@ export class TimelineImportService extends Service {
       if (!note) throw new Error('Imported doc has no note block');
 
       for (const entry of entries) {
-        const meta = {
+        const meta: Record<string, unknown> = {
           'meta:createdAt': entry.displayAt,
           'meta:updatedAt': entry.displayAt,
           'meta:displayInTimelineAt': entry.displayAt,
         };
+        if (entry.endAt) {
+          meta['meta:displayInTimelineEndAt'] = entry.endAt;
+        }
         const blockIds: string[] = [];
 
         // Add a non-timeline header so the doc view shows date/time and sender.
