@@ -41,6 +41,22 @@ export class Timeline extends Entity {
     );
   });
 
+  /** Entries grouped by month bucket (YYYY-MM) for the navigator. */
+  monthBuckets$ = LiveData.computed(get => {
+    const entries = get(this.unwindowedEntries$);
+    const buckets = new Map<string, TimelineEntry[]>();
+    for (const entry of entries) {
+      const key = groupKey(entry.displayInTimelineAt, 'month');
+      const list = buckets.get(key);
+      if (list) {
+        list.push(entry);
+      } else {
+        buckets.set(key, [entry]);
+      }
+    }
+    return buckets;
+  });
+
   /** Extra months loaded on demand beyond the configured initial window. */
   private readonly extendedMonths$ = new LiveData<number>(0);
 
@@ -56,8 +72,21 @@ export class Timeline extends Entity {
     return cutoff.getTime();
   });
 
-  private readonly windowed$ = LiveData.computed(get => {
+  private readonly viewRanged$ = LiveData.computed(get => {
     const entries = get(this.unwindowedEntries$);
+    const range = get(this.setting.viewRange$);
+    if (!range) return entries;
+    return entries.filter(entry => {
+      const start = entry.displayInTimelineAt;
+      const end = entry.displayInTimelineEndAt ?? start;
+      return start < range.end && end >= range.start;
+    });
+  });
+
+  private readonly windowed$ = LiveData.computed(get => {
+    const entries = get(this.viewRanged$);
+    const range = get(this.setting.viewRange$);
+    if (range) return { entries, olderCount: 0 };
     const cutoff = get(this.loadCutoff$);
     if (cutoff === null) return { entries, olderCount: 0 };
     const visible = entries.filter(

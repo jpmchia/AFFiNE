@@ -57,6 +57,8 @@ export interface TimelineSettings {
    * 0 means no limit. Older entries stay loadable on demand.
    */
   initialLoadMonths?: number;
+  /** Optional month/year navigator range (epoch ms). Null means show all. */
+  viewRange?: { start: number; end: number } | null;
 }
 
 export interface TimelineEntry {
@@ -67,6 +69,8 @@ export interface TimelineEntry {
   displayInTimelineAt: number;
   /** Optional end of a timeline period, in epoch milliseconds. */
   displayInTimelineEndAt?: number;
+  /** Optional custom accent/border colour for this entry. */
+  color?: string;
   excerpt: string;
   preview: TimelineBlockPreview;
 }

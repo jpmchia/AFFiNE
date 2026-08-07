@@ -71,9 +71,18 @@ export class TimelineSetting extends Entity {
   entryDatePrefixes$ = this.store.watchSettingKey('entryDatePrefixes');
   entryTagPrefixes$ = this.store.watchSettingKey('entryTagPrefixes');
   initialLoadMonths$ = this.store.watchSettingKey('initialLoadMonths');
+  viewRange$ = this.store.watchSettingKey('viewRange');
 
   updateInitialLoadMonths(months: number) {
     this.store.updateSetting('initialLoadMonths', months);
+  }
+
+  updateViewRange(start: number, end: number) {
+    this.store.updateSetting('viewRange', { start, end });
+  }
+
+  clearViewRange() {
+    this.store.updateSetting('viewRange', null);
   }
 
   getDefaultDisplayAtSource(): TimelineDisplayAtSource {

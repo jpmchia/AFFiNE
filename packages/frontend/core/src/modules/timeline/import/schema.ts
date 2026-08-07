@@ -45,6 +45,8 @@ export interface TimelineImportEntry {
   tags?: string[];
   /** Category name (resolved or created at import time). */
   category?: string;
+  /** Optional custom accent/border colour for this entry. */
+  color?: string;
 }
 
 export interface TimelineImportDataset {

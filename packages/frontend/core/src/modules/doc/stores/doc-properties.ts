@@ -5,8 +5,14 @@ import {
   yjsObserveDeep,
 } from '@toeverything/infra';
 import { isNil, omitBy } from 'lodash-es';
-import { combineLatest, map, switchMap } from 'rxjs';
-import { AbstractType as YAbstractType } from 'yjs';
+import {
+  combineLatest,
+  map,
+  type Observable,
+  startWith,
+  switchMap,
+} from 'rxjs';
+import { AbstractType as YAbstractType, Map as YMap } from 'yjs';
 
 import type { WorkspaceDBService } from '../../db';
 import type { DocProperties } from '../../db/schema/schema';
@@ -60,14 +66,72 @@ export class DocPropertiesStore extends Store {
   /**
    * find doc ids by property key and value
    *
-   * this apis will not include legacy properties
+   * This now includes legacy pageProperties so that properties which have not
+   * yet been migrated to the new docProperties table are still discoverable.
+   * New docProperties values always override legacy values.
    */
   watchPropertyAllValues(propertyKey: string) {
     return LiveData.from<Map<string, string | undefined>>(
-      this.dbService.db.docProperties
-        .select$(propertyKey)
-        .pipe(map(o => new Map(o.map(i => [i.id, i[propertyKey]])))),
+      combineLatest([
+        this.dbService.db.docProperties
+          .select$(propertyKey)
+          .pipe(
+            map(
+              o =>
+                new Map<string, string | undefined>(
+                  o.map(i => [i.id, i[propertyKey] as string | undefined])
+                )
+            )
+          ),
+        this.watchLegacyPropertyAllValues(propertyKey).pipe(
+          startWith(new Map<string, string | undefined>())
+        ),
+      ]).pipe(
+        map(
+          ([dbValues, legacyValues]: [
+            Map<string, string | undefined>,
+            Map<string, string | undefined>,
+          ]) => {
+            const result = new Map(legacyValues);
+            for (const [id, value] of dbValues) {
+              result.set(id, value);
+            }
+            return result;
+          }
+        )
+      ),
       new Map()
+    );
+  }
+
+  private watchLegacyPropertyAllValues(
+    propertyKey: string
+  ): Observable<Map<string, string | undefined>> {
+    return yjsGetPath(
+      this.workspaceService.workspace.rootYDoc.getMap<any>(
+        'affine:workspace-properties'
+      ),
+      'pageProperties'
+    ).pipe(
+      switchMap(yjsObserveDeep),
+      map((pageProperties): Map<string, string | undefined> => {
+        const result = new Map<string, string | undefined>();
+        if (!(pageProperties instanceof YMap)) {
+          return result;
+        }
+        const pages = (pageProperties as YMap<any>).toJSON() as Record<
+          string,
+          LegacyDocProperties
+        >;
+        for (const [id, props] of Object.entries(pages)) {
+          const info =
+            props?.custom?.[propertyKey] ?? props?.system?.[propertyKey];
+          if (info?.value !== undefined && info.value !== null) {
+            result.set(id, String(info.value));
+          }
+        }
+        return result;
+      })
     );
   }
 

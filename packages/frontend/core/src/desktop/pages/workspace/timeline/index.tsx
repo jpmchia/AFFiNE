@@ -45,6 +45,7 @@ import { ImportButton } from './import-button';
 import * as styles from './index.css';
 import { LoadOlderRow } from './load-older-row';
 import { TimelineLabelsSidebar } from './sidebar/labels-sidebar';
+import { TimelineNavigatorSidebar } from './sidebar/navigator-sidebar';
 import { TimelineItem } from './timeline-item';
 
 function zoomLevelLabel(
@@ -391,6 +392,11 @@ export const TimelinePage = () => {
       <ViewSidebarTab tabId="timeline-labels" icon={<TagIcon />}>
         <ScrollableContainer>
           <TimelineLabelsSidebar />
+        </ScrollableContainer>
+      </ViewSidebarTab>
+      <ViewSidebarTab tabId="timeline-navigator" icon={<HistoryIcon />}>
+        <ScrollableContainer>
+          <TimelineNavigatorSidebar />
         </ScrollableContainer>
       </ViewSidebarTab>
     </>

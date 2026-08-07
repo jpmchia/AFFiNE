@@ -119,7 +119,7 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
 
   const { category, assignedTags } = useEntryLabels(key);
   const tagColor = assignedTags[0]?.color;
-  const accentColor = tagColor ?? category?.color;
+  const accentColor = category?.color ?? entry.color ?? tagColor;
 
   const mergedEntries = entry.mergedEntries;
   const isMerged = !!entry.mergeId && !!mergedEntries;

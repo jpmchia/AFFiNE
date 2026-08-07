@@ -5,6 +5,7 @@ import { Service } from '@toeverything/infra';
 import type { DocsService } from '../../doc';
 import type { WorkspaceService } from '../../workspace';
 import type { TimelineSetting } from '../entities/setting';
+import type { TimelineEntry } from '../type';
 import {
   resolveMediaFile,
   type TimelineImportDataset,
@@ -16,9 +17,18 @@ export interface TimelineImportProgress {
   total: number;
 }
 
+export type ImportMode = 'import' | 'skip' | 'update';
+
+export interface TimelineImportOptions {
+  mode?: ImportMode;
+  /** Existing timeline entries to match against when mode is 'skip' or 'update'. */
+  existing?: TimelineEntry[];
+}
+
 export interface TimelineImportResult {
-  docId: string;
+  docId: string | null;
   imported: number;
+  updated: number;
   /** Human-readable messages for entries that could not be imported. */
   skipped: string[];
 }
@@ -42,16 +52,39 @@ export class TimelineImportService extends Service {
   async importDataset(
     dataset: TimelineImportDataset,
     mediaFiles: Map<string, File>,
+    options?: TimelineImportOptions,
     onProgress?: (progress: TimelineImportProgress) => void
   ): Promise<TimelineImportResult> {
+    const mode = options?.mode ?? 'import';
+    const existing = options?.existing ?? [];
     const title =
       dataset.docTitle ??
       `Timeline import ${new Date().toISOString().slice(0, 10)}`;
 
-    const docRecord = this.docsService.createDoc({
-      docProps: { page: { title: new Text(title) } },
-    });
-    const docId = docRecord.id;
+    const makeImportKey = (
+      displayAt: number,
+      endAt: number | undefined,
+      content: string
+    ) => [displayAt, endAt ?? '', content.slice(0, 150)].join('\0');
+
+    const existingByKey = new Map<
+      string,
+      { docId: string; blockId: string; entryKey: string }
+    >();
+    if (mode !== 'import') {
+      for (const e of existing) {
+        const key = makeImportKey(
+          e.displayInTimelineAt,
+          e.displayInTimelineEndAt,
+          e.excerpt
+        );
+        existingByKey.set(key, {
+          docId: e.docId,
+          blockId: e.blockId,
+          entryKey: `${e.docId}:${e.blockId}`,
+        });
+      }
+    }
 
     const tagIdByName = this.ensureLabels('tag', dataset.tags, [
       ...new Set(dataset.entries.flatMap(e => e.tags ?? [])),
@@ -74,6 +107,16 @@ export class TimelineImportService extends Service {
     const skipped: string[] = [];
     const entryTagAssignments = new Map<string, string[]>();
     const entryCategoryAssignments = new Map<string, string>();
+    const existingTagRemovals = new Map<string, string[]>();
+    const existingTagAdditions = new Map<string, string[]>();
+    const existingCategoryChanges = new Map<string, string[]>();
+    const existingColorUpdates = new Map<
+      string,
+      { blockId: string; color: string }[]
+    >();
+
+    const currentEntryTags = this.setting.entryTags$.value ?? {};
+    const currentEntryCategories = this.setting.entryCategories$.value ?? {};
 
     // stable, chronological block order inside the doc
     const entries = [...dataset.entries].sort(
@@ -81,18 +124,110 @@ export class TimelineImportService extends Service {
     );
     const total = entries.length;
     let done = 0;
+    let imported = 0;
+    let updated = 0;
 
-    const { doc, release } = this.docsService.open(docId);
+    const hasNew = entries.some(entry => {
+      const content = entry.text ?? entry.media ?? '';
+      const key = makeImportKey(entry.displayAt, entry.endAt, content);
+      return !existingByKey.has(key);
+    });
+
+    let docRecord: any;
+    let docId: string | null = null;
+    let newDoc: any;
+
+    if (hasNew) {
+      docRecord = this.docsService.createDoc({
+        docProps: { page: { title: new Text(title) } },
+      });
+      docId = docRecord.id;
+      newDoc = this.docsService.open(docId);
+    }
+
+    const store = newDoc?.doc.blockSuiteDoc;
+    const root = store?.root;
+    const note =
+      root?.children.find(child => child.flavour === 'affine:note') ??
+      (root && store
+        ? store.getBlock(store.addBlock('affine:note', {}, root.id))?.model
+        : undefined);
+    if (hasNew && (!store || !root || !note)) {
+      throw new Error('Imported doc has no note block');
+    }
+
     try {
-      const store = doc.blockSuiteDoc;
-      const root = store.root;
-      if (!root) throw new Error('Imported doc has no root block');
-      const note =
-        root.children.find(child => child.flavour === 'affine:note') ??
-        store.getBlock(store.addBlock('affine:note', {}, root.id))?.model;
-      if (!note) throw new Error('Imported doc has no note block');
-
       for (const entry of entries) {
+        const content = entry.text ?? entry.media ?? '';
+        const key = makeImportKey(entry.displayAt, entry.endAt, content);
+        const existingEntry =
+          mode !== 'import' ? existingByKey.get(key) : undefined;
+
+        if (existingEntry) {
+          if (mode === 'skip') {
+            skipped.push(
+              `Skipped duplicate at ${new Date(entry.displayAt).toLocaleString()}`
+            );
+            done += 1;
+            onProgress?.({ done, total });
+            continue;
+          }
+
+          if (mode === 'update') {
+            updated += 1;
+
+            const newTagIds = (entry.tags ?? [])
+              .map(name => tagIdByName.get(name.toLowerCase()))
+              .filter((id): id is string => !!id);
+            const oldTagIds = currentEntryTags[existingEntry.entryKey] ?? [];
+            for (const old of oldTagIds) {
+              if (!newTagIds.includes(old)) {
+                const keys = existingTagRemovals.get(old) ?? [];
+                keys.push(existingEntry.entryKey);
+                existingTagRemovals.set(old, keys);
+              }
+            }
+            for (const newId of newTagIds) {
+              if (!oldTagIds.includes(newId)) {
+                const keys = existingTagAdditions.get(newId) ?? [];
+                keys.push(existingEntry.entryKey);
+                existingTagAdditions.set(newId, keys);
+              }
+            }
+
+            const newCategoryId = entry.category
+              ? categoryIdByName.get(entry.category.toLowerCase())
+              : undefined;
+            const oldCategoryId =
+              currentEntryCategories[existingEntry.entryKey];
+            const categoryTarget =
+              newCategoryId !== undefined ? newCategoryId : 'null';
+            if (categoryTarget !== (oldCategoryId ?? 'null')) {
+              const keys = existingCategoryChanges.get(categoryTarget) ?? [];
+              keys.push(existingEntry.entryKey);
+              existingCategoryChanges.set(categoryTarget, keys);
+            }
+
+            if (entry.color) {
+              const list = existingColorUpdates.get(existingEntry.docId) ?? [];
+              list.push({
+                blockId: existingEntry.blockId,
+                color: entry.color,
+              });
+              existingColorUpdates.set(existingEntry.docId, list);
+            }
+
+            done += 1;
+            onProgress?.({ done, total });
+            continue;
+          }
+        }
+
+        if (!store || !note) {
+          throw new Error('New doc not initialized for import');
+        }
+        imported += 1;
+
         const meta: Record<string, unknown> = {
           'meta:createdAt': entry.displayAt,
           'meta:updatedAt': entry.displayAt,
@@ -100,6 +235,9 @@ export class TimelineImportService extends Service {
         };
         if (entry.endAt) {
           meta['meta:displayInTimelineEndAt'] = entry.endAt;
+        }
+        if (entry.color) {
+          meta['meta:timelineColor'] = entry.color;
         }
         const blockIds: string[] = [];
 
@@ -192,13 +330,44 @@ export class TimelineImportService extends Service {
         onProgress?.({ done, total });
       }
     } finally {
-      release();
+      newDoc?.release();
     }
 
-    // opt the doc into the timeline (same property the doc panel toggles)
-    docRecord.setProperty('includeInTimeline', true);
+    if (docRecord) {
+      docRecord.setProperty('includeInTimeline', true);
+    }
 
-    // single settings write per tag / category batch
+    for (const [docId, updates] of existingColorUpdates) {
+      const { doc, release } = this.docsService.open(docId);
+      try {
+        const store = doc.blockSuiteDoc;
+        store.withoutTransact(() => {
+          for (const { blockId, color } of updates) {
+            const block = store.getBlock(blockId)?.model;
+            if (!block) continue;
+            (block.props as Record<string, unknown>)['meta:timelineColor'] =
+              color;
+          }
+        });
+      } finally {
+        release();
+      }
+    }
+
+    for (const [tagId, keys] of existingTagRemovals) {
+      this.setting.setEntryTagBatch(keys, tagId, false);
+    }
+    for (const [tagId, keys] of existingTagAdditions) {
+      this.setting.setEntryTagBatch(keys, tagId, true);
+    }
+    for (const [categoryId, keys] of existingCategoryChanges) {
+      this.setting.setEntryCategoryBatch(
+        keys,
+        categoryId === 'null' ? null : categoryId
+      );
+    }
+
+    // single settings write per tag / category batch for new entries
     const byTag = new Map<string, string[]>();
     for (const [entryKey, tagIds] of entryTagAssignments) {
       for (const tagId of tagIds) {
@@ -221,8 +390,9 @@ export class TimelineImportService extends Service {
     }
 
     return {
-      docId,
-      imported: dataset.entries.length - skipped.length,
+      docId: docRecord?.id ?? null,
+      imported,
+      updated,
       skipped,
     };
   }

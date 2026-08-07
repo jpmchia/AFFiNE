@@ -103,12 +103,12 @@ export const UNIT_MS: Record<TimelineZoomLevel, number> = {
 
 const DEFAULTS = {
   estimatedHeight: 64,
-  pxPerUnit: 80,
-  maxGapPx: 160,
+  pxPerUnit: 40,
+  maxGapPx: 80,
   minDotGap: 24,
   cardSpacing: 16,
   padding: 40,
-  maxVisibleGapUnits: 4,
+  maxVisibleGapUnits: 2,
   collapsedGapPx: 48,
   minTickSpacing: 28,
   groupSpacing: 8,
@@ -125,9 +125,14 @@ function formatTickLabel(time: number, zoomLevel: TimelineZoomLevel): string {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     });
   }
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 }
 
 /**
@@ -301,17 +306,14 @@ export function computeGraphicalTimelineLayout(
     };
   };
 
-  // Positions the end of a period relative to its start, using the same
-  // time-proportional scale but ignoring content stacking so the block
-  // can overlap subsequent point-in-time entries.
+  // Positions the end of a period relative to its start using a
+  // time-proportional scale with a small minimum so very short periods
+  // remain visible. Periods are not capped so the block spans the full
+  // duration on the timeline.
   const placeEnd = (startY: number, startTime: number, endTime: number) => {
     if (endTime <= startTime) return startY;
     const timeDelta = endTime - startTime;
-    const collapsed = options.hideEmptyPeriods && timeDelta > maxGapMs;
-    const timeGapPx = collapsed
-      ? collapsedGapPx
-      : Math.min(timeDelta * pxPerMs, maxGapPx);
-    const gap = collapsed ? timeGapPx : Math.max(timeGapPx, minDotGap);
+    const gap = Math.max(timeDelta * pxPerMs, minDotGap);
     return startY + gap;
   };
 

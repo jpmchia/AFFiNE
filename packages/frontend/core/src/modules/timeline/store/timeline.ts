@@ -180,6 +180,10 @@ export class TimelineStore extends Store {
         const displayEndAt = props['meta:displayInTimelineEndAt'] as
           | number
           | undefined;
+        const color =
+          typeof props['meta:timelineColor'] === 'string'
+            ? props['meta:timelineColor']
+            : undefined;
 
         entries.push({
           docId,
@@ -191,6 +195,7 @@ export class TimelineStore extends Store {
             typeof displayEndAt === 'number' && displayEndAt > displayAt
               ? displayEndAt
               : undefined,
+          color,
           excerpt: getBlockExcerpt(block),
           preview: getBlockPreview(block),
         });

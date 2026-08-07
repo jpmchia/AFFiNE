@@ -34,7 +34,7 @@ export const tick = style({
   alignItems: 'center',
   transform: 'translate(-50%, -50%)',
   pointerEvents: 'none',
-  zIndex: 1,
+  zIndex: 100,
 });
 
 export const tickDot = style({
@@ -239,11 +239,29 @@ export const dayMarker = style({
   borderRadius: 14,
   border: `1px solid ${cssVar('borderColor')}`,
   background: cssVar('backgroundSecondaryColor'),
-  fontSize: cssVar('fontXs'),
+  fontSize: cssVar('fontSm'),
   fontWeight: 600,
   color: cssVar('textPrimaryColor'),
   whiteSpace: 'nowrap',
   zIndex: 3,
+  userSelect: 'none',
+  pointerEvents: 'none',
+});
+
+export const currentDay = style({
+  position: 'absolute',
+  top: 12,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  padding: '6px 16px',
+  borderRadius: 16,
+  border: `1px solid ${cssVar('borderColor')}`,
+  background: cssVar('backgroundSecondaryColor'),
+  fontSize: cssVar('fontSm'),
+  fontWeight: 600,
+  color: cssVar('textPrimaryColor'),
+  whiteSpace: 'nowrap',
+  zIndex: 105,
   userSelect: 'none',
   pointerEvents: 'none',
 });

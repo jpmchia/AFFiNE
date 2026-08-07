@@ -328,6 +328,16 @@ export const GraphicalTimelineView = () => {
     [layout.nodes, heights, inRange]
   );
 
+  const currentDay = useMemo(() => {
+    if (layout.dayMarkers.length === 0) return null;
+    let marker = layout.dayMarkers[0];
+    for (const m of layout.dayMarkers) {
+      if (m.y <= viewRange.top) marker = m;
+      else break;
+    }
+    return marker;
+  }, [layout.dayMarkers, viewRange.top]);
+
   const isEmpty = entries.length === 0 && olderCount === 0;
 
   if (isEmpty) {
@@ -340,6 +350,14 @@ export const GraphicalTimelineView = () => {
 
   return (
     <div className={styles.viewWrapper} onScrollCapture={handleScroll}>
+      {currentDay && (
+        <div
+          className={styles.currentDay}
+          data-testid="graphical-timeline-current-day"
+        >
+          {dayjs(currentDay.time).format('dddd, D MMMM YYYY')}
+        </div>
+      )}
       <ScrollableContainer className={pageStyles.scrollArea}>
         <div
           ref={containerRef}

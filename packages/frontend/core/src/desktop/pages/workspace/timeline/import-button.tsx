@@ -1,13 +1,15 @@
-import { IconButton, notify } from '@affine/component';
+import { IconButton, Menu, MenuItem, notify } from '@affine/component';
 import {
+  type ImportMode,
   parseTimelineCSV,
   parseTimelineDataset,
+  Timeline,
   type TimelineImportDataset,
   TimelineImportService,
 } from '@affine/core/modules/timeline';
 import { useI18n } from '@affine/i18n';
 import { ImportIcon } from '@blocksuite/icons/rc';
-import { useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useRef, useState } from 'react';
 
 /**
@@ -19,8 +21,15 @@ import { useCallback, useRef, useState } from 'react';
 export const ImportButton = () => {
   const t = useI18n();
   const importService = useService(TimelineImportService);
+  const timeline = useService(Timeline);
+  const existing = useLiveData(timeline.entries$) ?? [];
   const inputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [mode, setMode] = useState<ImportMode>('import');
+  const modeRef = useRef<ImportMode>(mode);
+  modeRef.current = mode;
+  const existingRef = useRef(existing);
+  existingRef.current = existing;
 
   const handleFiles = useCallback(
     async (fileList: FileList) => {
@@ -94,11 +103,15 @@ export const ImportButton = () => {
 
       setImporting(true);
       try {
-        const result = await importService.importDataset(dataset, mediaFiles);
+        const result = await importService.importDataset(dataset, mediaFiles, {
+          mode: modeRef.current,
+          existing: existingRef.current,
+        });
+        const totalImported = result.imported + result.updated;
         if (result.skipped.length > 0) {
           notify.warning({
             title: t.t('com.affine.timeline.import.partial', {
-              count: String(result.imported),
+              count: String(totalImported),
               skipped: String(result.skipped.length),
             }),
             message: result.skipped.slice(0, 5).join('\n'),
@@ -106,7 +119,7 @@ export const ImportButton = () => {
         } else {
           notify.success({
             title: t.t('com.affine.timeline.import.success', {
-              count: String(result.imported),
+              count: String(totalImported),
             }),
           });
         }
@@ -133,6 +146,41 @@ export const ImportButton = () => {
     [handleFiles]
   );
 
+  const menuItems = (
+    <>
+      <MenuItem
+        checked={mode === 'import'}
+        onSelect={() => {
+          setMode('import');
+          modeRef.current = 'import';
+          inputRef.current?.click();
+        }}
+      >
+        Import all
+      </MenuItem>
+      <MenuItem
+        checked={mode === 'skip'}
+        onSelect={() => {
+          setMode('skip');
+          modeRef.current = 'skip';
+          inputRef.current?.click();
+        }}
+      >
+        Skip duplicates
+      </MenuItem>
+      <MenuItem
+        checked={mode === 'update'}
+        onSelect={() => {
+          setMode('update');
+          modeRef.current = 'update';
+          inputRef.current?.click();
+        }}
+      >
+        Update duplicates
+      </MenuItem>
+    </>
+  );
+
   return (
     <>
       <input
@@ -144,15 +192,16 @@ export const ImportButton = () => {
         onChange={handleChange}
         data-testid="timeline-import-input"
       />
-      <IconButton
-        onClick={() => inputRef.current?.click()}
-        disabled={importing}
-        loading={importing}
-        tooltip={t['com.affine.timeline.import']()}
-        data-testid="timeline-import-button"
-      >
-        <ImportIcon />
-      </IconButton>
+      <Menu items={menuItems}>
+        <IconButton
+          disabled={importing}
+          loading={importing}
+          tooltip={t['com.affine.timeline.import']()}
+          data-testid="timeline-import-button"
+        >
+          <ImportIcon />
+        </IconButton>
+      </Menu>
     </>
   );
 };
