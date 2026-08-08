@@ -1,4 +1,5 @@
 import { Entity } from '@toeverything/infra';
+import { nanoid } from 'nanoid';
 
 import type { TimelineSettingStore } from '../store/setting';
 import type {
@@ -24,9 +25,7 @@ export const TIMELINE_LABEL_COLORS = [
 ];
 
 function newId(prefix: string) {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  return `${prefix}-${nanoid()}`;
 }
 
 /**

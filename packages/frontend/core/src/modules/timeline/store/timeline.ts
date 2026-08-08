@@ -261,11 +261,9 @@ export class TimelineStore extends Store {
           for (const docId of docIds) {
             const { doc, release } = this.docsService.open(docId);
             releases.push(release);
-            const handler = (trx: Transaction) => {
-              if (trx.local) {
-                dirty.add(docId);
-                scheduleRecompute();
-              }
+            const handler = (_trx: Transaction) => {
+              dirty.add(docId);
+              scheduleRecompute();
             };
             doc.yDoc.on('afterTransaction', handler);
             unsubscribes.push(() => doc.yDoc.off('afterTransaction', handler));

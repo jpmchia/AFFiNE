@@ -39,6 +39,8 @@ export interface TimelineImportEntry {
   /** Optional end of a timeline period, in epoch milliseconds. */
   endAt?: number;
   text?: string;
+  /** Optional title shown in the document-view header. */
+  title?: string;
   /** Path or file name referencing a media file shipped with the dataset. */
   media?: string;
   /** Tag names (resolved or created at import time). */

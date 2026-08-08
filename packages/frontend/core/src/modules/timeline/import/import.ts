@@ -1,10 +1,17 @@
 import type { AffineTextAttributes } from '@blocksuite/affine/shared/types';
-import { type DeltaInsert, Text } from '@blocksuite/affine/store';
+import {
+  type BlockModel,
+  type DeltaInsert,
+  Text,
+} from '@blocksuite/affine/store';
 import { Service } from '@toeverything/infra';
 
 import type { DocsService } from '../../doc';
 import type { WorkspaceService } from '../../workspace';
-import type { TimelineSetting } from '../entities/setting';
+import {
+  TIMELINE_LABEL_COLORS,
+  type TimelineSetting,
+} from '../entities/setting';
 import type { TimelineEntry } from '../type';
 import {
   resolveMediaFile,
@@ -86,23 +93,20 @@ export class TimelineImportService extends Service {
       }
     }
 
-    const tagIdByName = this.ensureLabels('tag', dataset.tags, [
-      ...new Set(dataset.entries.flatMap(e => e.tags ?? [])),
-    ]);
-    const categoryIdByName = this.ensureLabels('category', dataset.categories, [
-      ...new Set(
-        dataset.entries.map(e => e.category).filter((c): c is string => !!c)
-      ),
-    ]);
-
-    // Map tag name -> color for header styling.
-    const allTags = this.setting.tags$.value ?? [];
-    const tagColorById = new Map(allTags.map(t => [t.id, t.color] as const));
-    const tagColorByName = new Map<string, string>();
-    for (const [name, id] of tagIdByName) {
-      const color = tagColorById.get(id);
-      if (color) tagColorByName.set(name, color);
-    }
+    const { byName: tagIdByName, byColor: tagColorByName } = this.ensureLabels(
+      'tag',
+      dataset.tags,
+      [...new Set(dataset.entries.flatMap(e => e.tags ?? []))]
+    );
+    const { byName: categoryIdByName } = this.ensureLabels(
+      'category',
+      dataset.categories,
+      [
+        ...new Set(
+          dataset.entries.map(e => e.category).filter((c): c is string => !!c)
+        ),
+      ]
+    );
 
     const skipped: string[] = [];
     const entryTagAssignments = new Map<string, string[]>();
@@ -142,13 +146,15 @@ export class TimelineImportService extends Service {
         docProps: { page: { title: new Text(title) } },
       });
       docId = docRecord.id;
-      newDoc = this.docsService.open(docId);
+      newDoc = this.docsService.open(docRecord.id);
     }
 
     const store = newDoc?.doc.blockSuiteDoc;
     const root = store?.root;
     const note =
-      root?.children.find(child => child.flavour === 'affine:note') ??
+      root?.children.find(
+        (child: BlockModel) => child.flavour === 'affine:note'
+      ) ??
       (root && store
         ? store.getBlock(store.addBlock('affine:note', {}, root.id))?.model
         : undefined);
@@ -242,15 +248,29 @@ export class TimelineImportService extends Service {
         const blockIds: string[] = [];
 
         // Add a non-timeline header so the doc view shows date/time and sender.
-        const header = `${new Date(entry.displayAt).toLocaleString(undefined, {
-          dateStyle: 'short',
-          timeStyle: 'medium',
-        })}${entry.tags?.length ? ` — ${entry.tags.join(', ')}` : ''}`;
+        const dateTags = `${new Date(entry.displayAt).toLocaleString(
+          undefined,
+          {
+            dateStyle: 'short',
+            timeStyle: 'medium',
+          }
+        )}${entry.tags?.length ? ` — ${entry.tags.join(', ')}` : ''}`;
         const firstTag = entry.tags?.[0]?.toLowerCase();
         const tagColor = firstTag ? tagColorByName.get(firstTag) : undefined;
-        const headerDeltas: DeltaInsert<AffineTextAttributes>[] = tagColor
-          ? [{ insert: header, attributes: { color: tagColor } }]
-          : [{ insert: header }];
+        const headerDeltas: DeltaInsert<AffineTextAttributes>[] = [];
+        if (entry.title) {
+          const titleAttributes: AffineTextAttributes = { bold: true };
+          if (entry.color) titleAttributes.color = entry.color;
+          headerDeltas.push(
+            { insert: entry.title, attributes: titleAttributes },
+            { insert: '\n' }
+          );
+        }
+        headerDeltas.push(
+          tagColor
+            ? { insert: dateTags, attributes: { color: tagColor } }
+            : { insert: dateTags }
+        );
         store.addBlock(
           'affine:paragraph',
           {
@@ -329,12 +349,12 @@ export class TimelineImportService extends Service {
         done += 1;
         onProgress?.({ done, total });
       }
+
+      if (docRecord) {
+        docRecord.setProperty('includeInTimeline', true);
+      }
     } finally {
       newDoc?.release();
-    }
-
-    if (docRecord) {
-      docRecord.setProperty('includeInTimeline', true);
     }
 
     for (const [docId, updates] of existingColorUpdates) {
@@ -405,7 +425,7 @@ export class TimelineImportService extends Service {
     kind: 'tag' | 'category',
     defs: TimelineImportLabelDef[] | undefined,
     referencedNames: string[]
-  ): Map<string, string> {
+  ): { byName: Map<string, string>; byColor: Map<string, string | undefined> } {
     const known =
       kind === 'tag'
         ? (this.setting.tags$.value ?? [])
@@ -421,25 +441,37 @@ export class TimelineImportService extends Service {
             this.setting.updateCategory(id, { color });
 
     const byName = new Map<string, string>();
+    const byColor = new Map<string, string | undefined>();
     for (const label of known) {
       byName.set(label.name.toLowerCase(), label.id);
+      if (label.color) byColor.set(label.name.toLowerCase(), label.color);
     }
 
     const wanted: TimelineImportLabelDef[] = [
       ...(defs ?? []),
       ...referencedNames.map(name => ({ name })),
     ];
+    let nextColorIndex = known.length;
     for (const def of wanted) {
       const key = def.name.toLowerCase();
       let id = byName.get(key);
+      let color = def.color;
       if (!id) {
         id = create(def.name);
         byName.set(key, id);
+        if (!color) {
+          color =
+            TIMELINE_LABEL_COLORS[
+              nextColorIndex % TIMELINE_LABEL_COLORS.length
+            ];
+          nextColorIndex++;
+        }
+        updateColor(id, color);
+      } else if (color) {
+        updateColor(id, color);
       }
-      if (def.color) {
-        updateColor(id, def.color);
-      }
+      byColor.set(key, color);
     }
-    return byName;
+    return { byName, byColor };
   }
 }

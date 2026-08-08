@@ -306,6 +306,7 @@ export function parseTimelineCSV(text: string): TimelineImportParseResult {
       displayAt,
       endAt,
       text,
+      title,
       category,
       tags,
       color: colour,

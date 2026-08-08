@@ -19,6 +19,8 @@ export class BlocksuiteTimelineConfigService extends Service {
     private readonly settingStore: TimelineSettingStore
   ) {
     super();
+    const sub = this.includeInTimelineValues$.subscribe();
+    this.disposables.push(() => sub.unsubscribe());
   }
 
   private readonly includeInTimelineValues$ = LiveData.from(
@@ -45,6 +47,6 @@ export class BlocksuiteTimelineConfigService extends Service {
         setTimelineConfig(doc);
       }
     );
-    this.disposables.push(() => subscription.unsubscribe.bind(subscription));
+    this.disposables.push(() => subscription.unsubscribe());
   }
 }
