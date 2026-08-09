@@ -30,6 +30,13 @@ export interface TimelineImportOptions {
   mode?: ImportMode;
   /** Existing timeline entries to match against when mode is 'skip' or 'update'. */
   existing?: TimelineEntry[];
+  /** Overrides the dataset's target document title. */
+  docTitle?: string;
+  /**
+   * Category name (existing or new) applied to imported entries that do not
+   * define their own category.
+   */
+  category?: string;
 }
 
 export interface TimelineImportResult {
@@ -64,8 +71,10 @@ export class TimelineImportService extends Service {
   ): Promise<TimelineImportResult> {
     const mode = options?.mode ?? 'import';
     const existing = options?.existing ?? [];
+    const fallbackCategory = options?.category?.trim() || undefined;
     const title =
-      dataset.docTitle ??
+      options?.docTitle?.trim() ||
+      dataset.docTitle ||
       `Timeline import ${new Date().toISOString().slice(0, 10)}`;
 
     const makeImportKey = (
@@ -103,7 +112,9 @@ export class TimelineImportService extends Service {
       dataset.categories,
       [
         ...new Set(
-          dataset.entries.map(e => e.category).filter((c): c is string => !!c)
+          [...dataset.entries.map(e => e.category), fallbackCategory].filter(
+            (c): c is string => !!c
+          )
         ),
       ]
     );
@@ -201,8 +212,9 @@ export class TimelineImportService extends Service {
               }
             }
 
-            const newCategoryId = entry.category
-              ? categoryIdByName.get(entry.category.toLowerCase())
+            const entryCategory = entry.category ?? fallbackCategory;
+            const newCategoryId = entryCategory
+              ? categoryIdByName.get(entryCategory.toLowerCase())
               : undefined;
             const oldCategoryId =
               currentEntryCategories[existingEntry.entryKey];
@@ -340,8 +352,9 @@ export class TimelineImportService extends Service {
             .map(name => tagIdByName.get(name.toLowerCase()))
             .filter((id): id is string => !!id);
           if (tagIds.length) entryTagAssignments.set(entryKey, tagIds);
-          const categoryId = entry.category
-            ? categoryIdByName.get(entry.category.toLowerCase())
+          const entryCategory = entry.category ?? fallbackCategory;
+          const categoryId = entryCategory
+            ? categoryIdByName.get(entryCategory.toLowerCase())
             : undefined;
           if (categoryId) entryCategoryAssignments.set(entryKey, categoryId);
         }
@@ -470,7 +483,9 @@ export class TimelineImportService extends Service {
       } else if (color) {
         updateColor(id, color);
       }
-      byColor.set(key, color);
+      if (color || !byColor.has(key)) {
+        byColor.set(key, color);
+      }
     }
     return { byName, byColor };
   }

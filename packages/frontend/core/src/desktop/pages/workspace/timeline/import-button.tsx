@@ -1,6 +1,6 @@
-import { IconButton, Menu, MenuItem, notify } from '@affine/component';
+import { IconButton, notify } from '@affine/component';
+import { OrganizeService } from '@affine/core/modules/organize';
 import {
-  type ImportMode,
   parseTimelineCSV,
   parseTimelineDataset,
   Timeline,
@@ -12,6 +12,11 @@ import { ImportIcon } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useRef, useState } from 'react';
 
+import {
+  ImportOptionsDialog,
+  type ImportOptionsResult,
+} from './import-options-dialog';
+
 /**
  * Header action that bulk-imports a timeline dataset from a JSON manifest or a
  * CSV/TSV file. JSON imports may ship optional media files; CSV/TSV imports
@@ -21,13 +26,15 @@ import { useCallback, useRef, useState } from 'react';
 export const ImportButton = () => {
   const t = useI18n();
   const importService = useService(TimelineImportService);
+  const organizeService = useService(OrganizeService);
   const timeline = useService(Timeline);
   const existing = useLiveData(timeline.entries$) ?? [];
   const inputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
-  const [mode, setMode] = useState<ImportMode>('import');
-  const modeRef = useRef<ImportMode>(mode);
-  modeRef.current = mode;
+  const [pending, setPending] = useState<{
+    dataset: TimelineImportDataset;
+    mediaFiles: Map<string, File>;
+  } | null>(null);
   const existingRef = useRef(existing);
   existingRef.current = existing;
 
@@ -101,12 +108,46 @@ export const ImportButton = () => {
         return;
       }
 
+      setPending({ dataset, mediaFiles });
+    },
+    [t]
+  );
+
+  const handleConfirmImport = useCallback(
+    async (options: ImportOptionsResult) => {
+      if (!pending) return;
+      const { dataset, mediaFiles } = pending;
+
       setImporting(true);
       try {
         const result = await importService.importDataset(dataset, mediaFiles, {
-          mode: modeRef.current,
+          mode: options.mode,
           existing: existingRef.current,
+          docTitle: options.docTitle || undefined,
+          category:
+            options.category.kind === 'none'
+              ? undefined
+              : options.category.name,
         });
+
+        if (result.docId && options.folder.kind !== 'none') {
+          const rootFolder = organizeService.folderTree.rootFolder;
+          const folderNode =
+            options.folder.kind === 'existing'
+              ? options.folder.node
+              : organizeService.folderTree.folderNode$(
+                  rootFolder.createFolder(
+                    options.folder.name,
+                    rootFolder.indexAt('before')
+                  )
+                ).value;
+          folderNode?.createLink(
+            'doc',
+            result.docId,
+            folderNode.indexAt('after')
+          );
+        }
+
         const totalImported = result.imported + result.updated;
         if (result.skipped.length > 0) {
           notify.warning({
@@ -130,9 +171,10 @@ export const ImportButton = () => {
         });
       } finally {
         setImporting(false);
+        setPending(null);
       }
     },
-    [importService, t]
+    [importService, organizeService, pending, t]
   );
 
   const handleChange = useCallback(
@@ -146,41 +188,6 @@ export const ImportButton = () => {
     [handleFiles]
   );
 
-  const menuItems = (
-    <>
-      <MenuItem
-        checked={mode === 'import'}
-        onSelect={() => {
-          setMode('import');
-          modeRef.current = 'import';
-          inputRef.current?.click();
-        }}
-      >
-        Import all
-      </MenuItem>
-      <MenuItem
-        checked={mode === 'skip'}
-        onSelect={() => {
-          setMode('skip');
-          modeRef.current = 'skip';
-          inputRef.current?.click();
-        }}
-      >
-        Skip duplicates
-      </MenuItem>
-      <MenuItem
-        checked={mode === 'update'}
-        onSelect={() => {
-          setMode('update');
-          modeRef.current = 'update';
-          inputRef.current?.click();
-        }}
-      >
-        Update duplicates
-      </MenuItem>
-    </>
-  );
-
   return (
     <>
       <input
@@ -192,16 +199,29 @@ export const ImportButton = () => {
         onChange={handleChange}
         data-testid="timeline-import-input"
       />
-      <Menu items={menuItems}>
-        <IconButton
-          disabled={importing}
-          loading={importing}
-          tooltip={t['com.affine.timeline.import']()}
-          data-testid="timeline-import-button"
-        >
-          <ImportIcon />
-        </IconButton>
-      </Menu>
+      <IconButton
+        disabled={importing}
+        loading={importing}
+        tooltip={t['com.affine.timeline.import']()}
+        data-testid="timeline-import-button"
+        onClick={() => inputRef.current?.click()}
+      >
+        <ImportIcon />
+      </IconButton>
+      <ImportOptionsDialog
+        open={pending !== null}
+        defaultTitle={
+          pending?.dataset.docTitle ??
+          `Timeline import ${new Date().toISOString().slice(0, 10)}`
+        }
+        importing={importing}
+        onConfirm={options => {
+          handleConfirmImport(options).catch(console.error);
+        }}
+        onCancel={() => {
+          if (!importing) setPending(null);
+        }}
+      />
     </>
   );
 };
