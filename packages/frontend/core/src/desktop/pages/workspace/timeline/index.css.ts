@@ -61,9 +61,10 @@ export const scrollArea = style({
 export const listContainer = style({
   display: 'flex',
   flexDirection: 'column',
-  maxWidth: 900,
-  margin: '0 auto',
-  padding: '8px 24px 48px',
+  alignItems: 'center',
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '8px 8px 48px',
   gap: 24,
 });
 
@@ -87,6 +88,9 @@ export const groupHeader = style({
 export const item = style({
   display: 'flex',
   flexDirection: 'column',
+  width: 'fit-content',
+  maxWidth: '100%',
+  boxSizing: 'border-box',
   gap: 4,
   padding: '10px 12px',
   borderRadius: 8,
@@ -127,6 +131,14 @@ export const itemDocTitle = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+});
+
+export const itemTitle = style({
+  fontSize: cssVar('fontXs'),
+  fontWeight: 500,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  marginBottom: 4,
 });
 
 export const itemExcerpt = style({

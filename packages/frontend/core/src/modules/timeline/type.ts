@@ -71,6 +71,8 @@ export interface TimelineEntry {
   displayInTimelineEndAt?: number;
   /** Optional custom accent/border colour for this entry. */
   color?: string;
+  /** Optional title for this entry. */
+  title?: string;
   excerpt: string;
   preview: TimelineBlockPreview;
 }

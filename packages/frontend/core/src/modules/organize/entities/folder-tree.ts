@@ -31,4 +31,8 @@ export class FolderTree extends Entity {
       null
     );
   }
+
+  docFolderPath$(docId: string) {
+    return this.folderStore.docFolderPath$(docId);
+  }
 }

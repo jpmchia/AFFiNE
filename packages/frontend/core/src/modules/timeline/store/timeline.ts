@@ -184,6 +184,10 @@ export class TimelineStore extends Store {
           typeof props['meta:timelineColor'] === 'string'
             ? props['meta:timelineColor']
             : undefined;
+        const title =
+          typeof props['meta:timelineTitle'] === 'string'
+            ? props['meta:timelineTitle']
+            : undefined;
 
         entries.push({
           docId,
@@ -196,6 +200,7 @@ export class TimelineStore extends Store {
               ? displayEndAt
               : undefined,
           color,
+          title,
           excerpt: getBlockExcerpt(block),
           preview: getBlockPreview(block),
         });

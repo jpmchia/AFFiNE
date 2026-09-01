@@ -18,6 +18,8 @@ import {
 import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
+import { type TimelineImportSource } from './import-source';
+
 export type ImportFolderSelection =
   | { kind: 'none' }
   | { kind: 'existing'; node: FolderNode; name: string }
@@ -96,12 +98,20 @@ export const ImportOptionsDialog = ({
   open,
   defaultTitle,
   importing,
+  sources,
+  onAddFiles,
+  onAddFolder,
+  onRemoveSource,
   onConfirm,
   onCancel,
 }: {
   open: boolean;
   defaultTitle: string;
   importing: boolean;
+  sources: TimelineImportSource[];
+  onAddFiles: () => void;
+  onAddFolder: () => void;
+  onRemoveSource: (index: number) => void;
   onConfirm: (result: ImportOptionsResult) => void;
   onCancel: () => void;
 }) => {
@@ -180,10 +190,68 @@ export const ImportOptionsDialog = ({
         if (!isOpen) onCancel();
       }}
       title="Import timeline"
-      description="Choose where the imported entries should go."
+      description="Select dataset files or folders, then choose where the imported entries should go."
       width={420}
       persistent={importing}
     >
+      <div style={rowStyle}>
+        <span style={labelStyle}>Sources</span>
+        {sources.length === 0 ? (
+          <div style={{ fontSize: 12, opacity: 0.6 }}>
+            No files or folders selected
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {sources.map((source, index) => (
+              <div
+                key={source.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 12,
+                  padding: '2px 0',
+                }}
+              >
+                <span>
+                  {source.name}
+                  {!source.errors.length ? (
+                    <span style={{ opacity: 0.6 }}>
+                      {' '}
+                      — {source.dataset.entries.length} entries
+                    </span>
+                  ) : (
+                    <span style={{ color: '#eb5757' }}>
+                      {' '}
+                      — {source.errors.length} errors
+                    </span>
+                  )}
+                </span>
+                <Button
+                  onClick={() => onRemoveSource(index)}
+                  disabled={importing}
+                  style={{ padding: '4px 8px', fontSize: 12 }}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <Menu
+            items={
+              <>
+                <MenuItem onSelect={onAddFiles}>Add files</MenuItem>
+                <MenuItem onSelect={onAddFolder}>Add folder</MenuItem>
+              </>
+            }
+          >
+            <Button disabled={importing}>Add files / folders</Button>
+          </Menu>
+        </div>
+      </div>
+
       <div style={rowStyle}>
         <span style={labelStyle}>Duplicates</span>
         <RadioGroup
@@ -195,11 +263,11 @@ export const ImportOptionsDialog = ({
       </div>
 
       <div style={rowStyle}>
-        <span style={labelStyle}>Document name</span>
+        <span style={labelStyle}>Document name prefix (optional)</span>
         <Input
           value={docTitle}
           onChange={setDocTitle}
-          placeholder="Document name"
+          placeholder="Optional prefix for each imported document"
           data-testid="timeline-import-doc-title"
         />
       </div>
@@ -284,7 +352,7 @@ export const ImportOptionsDialog = ({
           variant="primary"
           onClick={handleConfirm}
           loading={importing}
-          disabled={importing}
+          disabled={importing || sources.length === 0}
           data-testid="timeline-import-confirm"
         >
           Import

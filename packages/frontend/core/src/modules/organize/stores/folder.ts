@@ -1,4 +1,5 @@
-import { Store } from '@toeverything/infra';
+import { LiveData, Store } from '@toeverything/infra';
+import { map } from 'rxjs';
 
 import type { WorkspaceDBService } from '../../db';
 
@@ -121,6 +122,29 @@ export class FolderStore extends Store {
     this.dbService.db.folders.update(nodeId, {
       data: name,
     });
+  }
+
+  docFolderPath$(docId: string) {
+    return LiveData.from(
+      this.dbService.db.folders.find$({ data: docId, type: 'doc' }).pipe(
+        map(links => {
+          const link = links[0];
+          if (!link) return null;
+          const parts: string[] = [];
+          let parentId = link.parentId;
+          while (parentId) {
+            const info = this.dbService.db.folders.get(parentId);
+            if (!info) break;
+            if (info.type === 'folder') {
+              parts.unshift(info.data);
+            }
+            parentId = info.parentId;
+          }
+          return parts.length ? parts.join('/') : null;
+        })
+      ),
+      null
+    );
   }
 
   createFolder(parentId: string | null, name: string, index: string) {

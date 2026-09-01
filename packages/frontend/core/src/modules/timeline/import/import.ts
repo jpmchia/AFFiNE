@@ -54,6 +54,40 @@ export interface TimelineImportResult {
  * opts the doc into the timeline and assigns tags/categories through the
  * timeline settings.
  */
+function parseMarkdownToDeltas(
+  markdown: string
+): DeltaInsert<AffineTextAttributes>[] {
+  const normalized = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const deltas: DeltaInsert<AffineTextAttributes>[] = [];
+  const regex =
+    /(\*\*|__)(.+?)\1|(\*|_)(.+?)\3|\[([^\]]+)\]\(([^)]+)\)|(`)([^`]+)\7|(\n)/g;
+  let last = 0;
+  for (const match of normalized.matchAll(regex)) {
+    if (match.index > last) {
+      deltas.push({ insert: normalized.slice(last, match.index) });
+    }
+    if (match[2]) {
+      deltas.push({ insert: match[2], attributes: { bold: true } });
+    } else if (match[4]) {
+      deltas.push({ insert: match[4], attributes: { italic: true } });
+    } else if (match[5] !== undefined) {
+      deltas.push({
+        insert: match[5],
+        attributes: { link: match[6] },
+      });
+    } else if (match[8]) {
+      deltas.push({ insert: match[8], attributes: { code: true } });
+    } else if (match[9]) {
+      deltas.push({ insert: '\n' });
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < normalized.length) {
+    deltas.push({ insert: normalized.slice(last) });
+  }
+  return deltas;
+}
+
 export class TimelineImportService extends Service {
   constructor(
     private readonly docsService: DocsService,
@@ -248,7 +282,6 @@ export class TimelineImportService extends Service {
 
         const meta: Record<string, unknown> = {
           'meta:createdAt': entry.displayAt,
-          'meta:updatedAt': entry.displayAt,
           'meta:displayInTimelineAt': entry.displayAt,
         };
         if (entry.endAt) {
@@ -256,6 +289,10 @@ export class TimelineImportService extends Service {
         }
         if (entry.color) {
           meta['meta:timelineColor'] = entry.color;
+        }
+        if (entry.title) {
+          // Set later; only if the title is not the entire body text.
+          meta['meta:timelineTitle'] = entry.title;
         }
         const blockIds: string[] = [];
 
@@ -270,19 +307,19 @@ export class TimelineImportService extends Service {
         const firstTag = entry.tags?.[0]?.toLowerCase();
         const tagColor = firstTag ? tagColorByName.get(firstTag) : undefined;
         const headerDeltas: DeltaInsert<AffineTextAttributes>[] = [];
-        if (entry.title) {
-          const titleAttributes: AffineTextAttributes = { bold: true };
-          if (entry.color) titleAttributes.color = entry.color;
-          headerDeltas.push(
-            { insert: entry.title, attributes: titleAttributes },
-            { insert: '\n' }
-          );
-        }
         headerDeltas.push(
           tagColor
             ? { insert: dateTags, attributes: { color: tagColor } }
             : { insert: dateTags }
         );
+        if (entry.title) {
+          const titleAttributes: AffineTextAttributes = { bold: true };
+          if (entry.color) titleAttributes.color = entry.color;
+          headerDeltas.push(
+            { insert: '\n' },
+            { insert: entry.title, attributes: titleAttributes }
+          );
+        }
         store.addBlock(
           'affine:paragraph',
           {
@@ -337,10 +374,26 @@ export class TimelineImportService extends Service {
         }
 
         if (entry.text) {
+          const titlePrefix = entry.title ? `${entry.title}\n` : '';
+          const hasContentPrefix =
+            titlePrefix && entry.text.startsWith(titlePrefix);
+          const body = hasContentPrefix
+            ? entry.text.slice(titlePrefix.length)
+            : entry.text;
+          const isTitleOnly = entry.title && !hasContentPrefix;
+          const isEmptyAfterTitle = hasContentPrefix && !body.trim();
+          if (isTitleOnly || isEmptyAfterTitle) {
+            // The title is the only text; show it as normal content.
+            delete meta['meta:timelineTitle'];
+          }
+          const finalBody = isEmptyAfterTitle ? entry.text : body;
           blockIds.push(
             store.addBlock(
               'affine:paragraph',
-              { text: new Text(entry.text), ...meta },
+              {
+                text: new Text(parseMarkdownToDeltas(finalBody)),
+                ...meta,
+              },
               note.id
             )
           );

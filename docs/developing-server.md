@@ -41,9 +41,11 @@ yarn affine @affine/server-native build
 # uncomment all env variables here
 cp packages/backend/server/.env.example packages/backend/server/.env
 
-# everytime there are new migrations, init command should runned again
+# every time there are new migrations, init command should run again
 yarn affine server init
 ```
+
+yarn affine server prisma migrate reset
 
 ## Start server
 

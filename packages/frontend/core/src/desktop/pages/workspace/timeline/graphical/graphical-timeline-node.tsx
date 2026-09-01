@@ -17,6 +17,7 @@ import {
 } from '@affine/core/modules/timeline';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
+import { OrganizeService } from '@affine/core/modules/organize';
 import {
   DeleteIcon,
   DoneIcon,
@@ -99,6 +100,10 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
   const timeline = useService(Timeline);
   const setting = useService(TimelineSetting);
   const docDisplayMetaService = useService(DocDisplayMetaService);
+  const organizeService = useService(OrganizeService);
+  const folderPath = useLiveData(
+    organizeService.folderTree.docFolderPath$(entry.docId)
+  );
   const DocIcon = useLiveData(docDisplayMetaService.icon$(entry.docId));
   const batch = useBatchProgress();
 
@@ -120,6 +125,8 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
   const { category, assignedTags } = useEntryLabels(key);
   const tagColor = assignedTags[0]?.color;
   const accentColor = category?.color ?? entry.color ?? tagColor;
+  const docTitle = entry.docTitle || t['Untitled']();
+  const displayDocTitle = folderPath ? `${folderPath} / ${docTitle}` : docTitle;
 
   const mergedEntries = entry.mergedEntries;
   const isMerged = !!entry.mergeId && !!mergedEntries;
@@ -603,7 +610,7 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
                 <div className={styles.cardTitleGroup}>
                   <DocIcon />
                   <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
-                    {entry.docTitle || t['Untitled']()}
+                    {displayDocTitle}
                   </span>
                 </div>
                 <div className={styles.cardMetaGroup}>
@@ -633,13 +640,22 @@ export const GraphicalTimelineNode = memo(function GraphicalTimelineNode({
                 </div>
                 <div className={styles.cardTitleGroup}>
                   <span className={styles.cardDocTitle} onClick={handleOpenDoc}>
-                    {entry.docTitle || t['Untitled']()}
+                    {displayDocTitle}
                   </span>
                   <DocIcon />
                 </div>
               </>
             )}
           </div>
+          {entry.title ? (
+            <div
+              className={styles.cardTitle}
+              style={{ color: accentColor }}
+              data-testid="graphical-timeline-title"
+            >
+              {entry.title}
+            </div>
+          ) : null}
           {isMerged && mergedEntries ? (
             mergedEntries.map((member, index) => (
               <Fragment key={entryKey(member)}>

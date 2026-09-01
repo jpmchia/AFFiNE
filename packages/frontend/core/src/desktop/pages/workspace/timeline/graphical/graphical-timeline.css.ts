@@ -11,8 +11,6 @@ export const AXIS_CARD_MARGIN = 88;
 export const container = style({
   position: 'relative',
   width: '100%',
-  margin: '0 auto',
-  maxWidth: 1200,
   padding: '24px 0 48px',
 });
 
@@ -109,7 +107,7 @@ export const connector = style({
 
 export const card = style({
   position: 'absolute',
-  width: 'max-content',
+  width: 'fit-content',
   maxWidth: `calc(50% - ${AXIS_CARD_MARGIN + 24}px)`,
   userSelect: 'none',
   minWidth: 220,
@@ -173,6 +171,14 @@ export const cardDocTitle = style({
       color: cssVar('primaryColor'),
     },
   },
+});
+
+export const cardTitle = style({
+  fontSize: cssVar('fontBase'),
+  fontWeight: 500,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  marginBottom: 4,
 });
 
 export const cardSelected = style({

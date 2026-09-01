@@ -100,11 +100,11 @@ function parseDateTime(value: string): number | null {
   if (day < 1 || day > 31) return null;
   if (hour > 23 || minute > 59 || second > 59) return null;
 
-  const parsed = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  const parsed = new Date(year, month - 1, day, hour, minute, second);
   if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
   ) {
     return null;
   }
