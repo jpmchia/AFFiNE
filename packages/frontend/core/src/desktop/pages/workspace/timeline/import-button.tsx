@@ -7,13 +7,13 @@ import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useRef, useState } from 'react';
 
 import {
-  buildTimelineImportSources,
-  type TimelineImportSource,
-} from './import-source';
-import {
   ImportOptionsDialog,
   type ImportOptionsResult,
 } from './import-options-dialog';
+import {
+  buildTimelineImportSources,
+  type TimelineImportSource,
+} from './import-source';
 
 /**
  * Header action that bulk-imports a timeline dataset from a JSON manifest or a
@@ -183,7 +183,6 @@ export const ImportButton = () => {
         type="file"
         // @ts-expect-error non-standard directory attributes
         webkitdirectory="true"
-        directory="true"
         style={{ display: 'none' }}
         onChange={handleFileInputChange}
         data-testid="timeline-import-folder-input"

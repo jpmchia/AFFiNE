@@ -5,6 +5,7 @@ import {
   MenuSub,
 } from '@affine/component';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
+import { OrganizeService } from '@affine/core/modules/organize';
 import { PeekViewService } from '@affine/core/modules/peek-view';
 import {
   parseLeadingDateTime,
@@ -17,7 +18,6 @@ import {
 } from '@affine/core/modules/timeline';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
-import { OrganizeService } from '@affine/core/modules/organize';
 import {
   DeleteIcon,
   DoneIcon,

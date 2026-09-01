@@ -98,8 +98,11 @@ export async function buildTimelineImportSources(
       const parent = getParentPath(path);
       let matched = '';
       for (const mp of manifestParents) {
-        if (parent === mp || parent.startsWith(`${mp}/`)) {
-          if (mp.length > matched.length) matched = mp;
+        if (
+          (parent === mp || parent.startsWith(`${mp}/`)) &&
+          mp.length > matched.length
+        ) {
+          matched = mp;
         }
       }
       if (matched) {

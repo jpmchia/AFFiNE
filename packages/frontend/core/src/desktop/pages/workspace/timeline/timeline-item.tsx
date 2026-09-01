@@ -1,5 +1,6 @@
 import { Menu } from '@affine/component';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
+import { OrganizeService } from '@affine/core/modules/organize';
 import { PeekViewService } from '@affine/core/modules/peek-view';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
@@ -12,7 +13,6 @@ import {
   type TimelineEntry,
   TimelineSetting,
 } from '../../../../modules/timeline';
-import { OrganizeService } from '@affine/core/modules/organize';
 import { categoryBorderStyle, TagPills, useEntryLabels } from './entry-labels';
 import * as styles from './index.css';
 import { TimelineItemPreview } from './timeline-item-preview';
